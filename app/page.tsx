@@ -33,13 +33,14 @@ export default function Home() {
           </button>
         </div>
       </div>
-      <div className="about flex justify-between items-center gap-2 p-24 h-fit bg-white">
+      <div className="about flex justify-between items-center gap-2 p-24 h-fit bg-white group">
         <div className="w-1/2">
           <img 
+            className="transition duration-300 group-hover:scale-110"
             src="/images/camera-shot.png"
           />
         </div>
-        <div className="flex flex-col items-center gap-8 w-1/2">
+        <div className="flex flex-col items-center gap-8 w-1/2 group-hover:blur transition duration-300">
           <h2 className="text-4xl font-bold">ABOUT US</h2>
           <p>
             We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
