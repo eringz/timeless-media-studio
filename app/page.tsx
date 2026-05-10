@@ -55,7 +55,7 @@ export default function Home() {
         </div>
       </div>
       <div className="gallery">
-        gallery ni ron
+        gallery ni ron ito
       </div>
       <div className="contact">Contact us</div>
       <footer>
