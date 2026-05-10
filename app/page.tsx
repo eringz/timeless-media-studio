@@ -4,11 +4,6 @@
 
 "use client";
 
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectCards } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/effect-cards';
-
 export default function Home() {
   return (
     <div className="flex flex-col w-screen">
@@ -41,66 +36,55 @@ export default function Home() {
           </button>
         </div>
       </nav>
-      <Swiper
-        modules={[EffectCards]}
-        effect="cards"
-        grabCursor={true}
-        className="mySwiper"
-      >
-        <SwiperSlide>
-          <div className="hero-section w-screen">
-            <div
-              className="flex flex-col gap-8 absolute left-24 p-4 w-128 h-fit text-white"
-            >
-              <p className="text-9xl">
-                Create Every Moment
-              </p>
-              <button
-                className="group relative overflow-hidden px-8 py-4 w-48 border border-white rounded-full transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700"
-              >
-                <span className="relative z-10">Book Now</span>
-                <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-              </button>
-            </div>
-          </div>
-        </SwiperSlide>
-        <SwiperSlide>
-          <div className="about flex justify-between items-center gap-2 p-24 h-fit bg-white group">
-            <div className="w-1/2">
-              <img 
-                className="transition duration-300 group-hover:scale-110"
-                src="/images/camera-shot.png"
-              />
-            </div>
-            <div className="flex flex-col items-center gap-8 w-1/2">
-              <h2 className="text-4xl font-bold">ABOUT US</h2>
-              <p>
-                We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
-              </p>
-              <p>
-                From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We don't just take pictures; we preserve legacies, one frame at a time.
-              </p>
-            </div>
-          </div>
-        </SwiperSlide>
-        <SwiperSlide>
-          <div className="services flex flex-col items-center h-120 ">
-            <h2 className="text-4xl font-bold">Services</h2>
-            <div className="cards ">
-              <div>Harry - Update 2</div>
-            </div>
-          </div>
-        </SwiperSlide>
-        <SwiperSlide>
-          <div className="gallery">
-            gallery ni ron ito
-          </div>
-        </SwiperSlide>
-        <SwiperSlide>
-          <div className="contact">Contact us</div>
-        </SwiperSlide>
-      </Swiper>
-      <footer>
+      <div className="hero-section w-screen bg-black text-white relative">
+        <div
+          className="flex flex-col gap-8 p-24 max-w-6xl mx-auto"
+        >
+          <p className="text-6xl md:text-8xl font-bold">
+            Create Every Moment
+          </p>
+          <button
+            className="px-8 py-4 w-48 border border-white rounded-full hover:bg-white hover:text-black transition duration-300"
+          >
+            Book Now
+          </button>
+        </div>
+      </div>
+      <div className="about flex flex-col lg:flex-row justify-between items-center gap-8 p-24 bg-white text-black">
+        <div className="w-full lg:w-1/2">
+          <img 
+            className="w-full h-auto rounded-xl shadow-lg"
+            src="/images/camera-shot.png"
+            alt="Camera shot"
+          />
+        </div>
+        <div className="flex flex-col gap-8 w-full lg:w-1/2">
+          <h2 className="text-4xl font-bold">ABOUT US</h2>
+          <p>
+            We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
+          </p>
+          <p>
+            From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We don't just take pictures; we preserve legacies, one frame at a time.
+          </p>
+        </div>
+      </div>
+      <div className="services flex flex-col items-center gap-8 p-24 bg-gray-100 text-black">
+        <h2 className="text-4xl font-bold">Services</h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-6xl mx-auto">
+          <div className="rounded-3xl border border-gray-300 p-8 bg-white shadow-sm">Photography</div>
+          <div className="rounded-3xl border border-gray-300 p-8 bg-white shadow-sm">Videography</div>
+          <div className="rounded-3xl border border-gray-300 p-8 bg-white shadow-sm">Event Coverage</div>
+        </div>
+      </div>
+      <div className="gallery flex flex-col items-center gap-6 p-24 bg-white text-black">
+        <h2 className="text-4xl font-bold">Gallery</h2>
+        <p>gallery ni ron ito</p>
+      </div>
+      <div className="contact flex flex-col items-center gap-4 p-24 bg-black text-white">
+        <h2 className="text-4xl font-bold">Contact</h2>
+        <p>Contact us</p>
+      </div>
+      <footer className="p-6 bg-gray-900 text-white text-center">
         Copyright by Frontdesk Team 2026
       </footer>
     </div>
