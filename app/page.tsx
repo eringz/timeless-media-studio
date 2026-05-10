@@ -1,4 +1,3 @@
-// 
 "use client";
 
 export default function Home() {
@@ -36,6 +35,7 @@ export default function Home() {
         <div className="w-1/2">
           <img 
             src="/images/camera-shot.png"
+            alt="camera shot image"
           />
         </div>
         <div className="flex flex-col items-center gap-8 w-1/2">
