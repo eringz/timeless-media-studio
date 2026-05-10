@@ -1,26 +1,21 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
 }
+    .nav-header {
+        position: sticky;
+        top: 0;
+        /* z-index: 100; */
+    }
+
+    .hero-section {
+        background-image: url("/images/camera.png");
+        background-size: cover;
+        background-position: center; /* Sinisiguro na laging nasa gitna ang focus */
+        background-repeat: no-repeat;
+        min-height: 100vh; /* Para sakop ang buong screen */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
