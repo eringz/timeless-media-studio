@@ -3,9 +3,9 @@
 
 export default function Home() {
   return (
-    <div className="flex flex-col bg-black w-screen">
+    <div className="flex flex-col w-screen">
       <nav
-        className="nav-header p-8 flex justify-between gap-2 w-screen text-white"
+        className="nav-header  flex justify-between gap-2 p-8 bg-black w-screen text-white"
       >
         <div className="text-4xl">Timeless Media Studio</div>
         <div 
@@ -32,9 +32,35 @@ export default function Home() {
           </button>
         </div>
       </div>
-      <div className="about h-240 bg-red-100">
-
+      <div className="about flex justify-between items-center gap-2 p-24 h-fit bg-white">
+        <div className="w-1/2">
+          <img 
+            src="/images/camera-shot.png"
+          />
+        </div>
+        <div className="flex flex-col items-center gap-8 w-1/2">
+          <h2 className="text-4xl font-bold">ABOUT US</h2>
+          <p>
+            We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
+          </p>
+          <p>
+            From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We don't just take pictures; we preserve legacies, one frame at a time.
+          </p>
+        </div>
       </div>
+      <div className="services flex flex-col items-center h-120 ">
+        <h2 className="text-4xl font-bold">Services</h2>
+        <div className="cards ">
+          <div></div>
+        </div>
+      </div>
+      <div className="gallery">
+        gallery
+      </div>
+      <div className="contact">Contact us</div>
+      <footer>
+        Copyright by Frontdesk Team 2026
+      </footer>
     </div>
   );
 }
