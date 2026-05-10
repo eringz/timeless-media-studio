@@ -12,11 +12,11 @@ export default function Home() {
         <div 
           className="flex gap-20"
         >
-          <a>Home</a>
-          <a>About</a>
-          <button className="hover:bg-gray-700 transition duration-300">Services</button>
-          <a>Gallery</a>
-          <a>Contact</a>
+          <button className="hover:bg-gray-700 transition duration-300 rounded-full">Home</button>
+          <button className="hover:bg-gray-700 transition duration-300 rounded-full">About</button>
+          <button className="hover:bg-gray-700 transition duration-300 rounded-full">Services</button>
+          <button className="hover:bg-gray-700 transition duration-300 rounded-full">Gallery</button>
+          <button className="hover:bg-gray-700 transition duration-300 rounded-full">Contact</button>
         </div>
       </nav>
       <div className="hero-section w-screen">
@@ -27,7 +27,7 @@ export default function Home() {
             Create Every Moment
           </p>
           <button
-            className="px-8 py-4 w-48 border border-white rounded-lg"
+            className="px-8 py-4 w-48 border border-white rounded-full hover:bg-gray-700 transition duration-300"
           >
             Book Now
           </button>
