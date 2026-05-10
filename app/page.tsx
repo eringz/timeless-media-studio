@@ -1,32 +1,52 @@
 "use client";
 
+import { useEffect, useRef, useState } from 'react';
+
 export default function Home() {
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setHeaderVisible(false);
+      } else {
+        setHeaderVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="flex flex-col w-screen">
       <nav
-        className="nav-header  flex justify-between gap-2 p-8 bg-black w-screen text-white"
+        className={`nav-header fixed top-0 left-0 right-0 z-50 transform transition-transform duration-500 ease-in-out bg-black ${headerVisible ? 'translate-y-0' : '-translate-y-full'} flex justify-between gap-2 p-8 text-white`}
       >
         <div className="text-4xl">Timeless Media Studio</div>
         <div 
           className="flex gap-20"
         >
-          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700">
             <span className="relative z-10">Home</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </button>
-          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700">
             <span className="relative z-10">About</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </button>
-          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700">
             <span className="relative z-10">Services</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </button>
-          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700">
             <span className="relative z-10">Gallery</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </button>
-          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700">
             <span className="relative z-10">Contact</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </button>
