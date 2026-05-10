@@ -5,7 +5,9 @@
 "use client";
 
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { EffectCards } from 'swiper/modules';
 import 'swiper/css';
+import 'swiper/css/effect-cards';
 
 export default function Home() {
   return (
@@ -24,7 +26,12 @@ export default function Home() {
           <button className="hover:bg-gray-700 transition duration-300 rounded-full active:scale-95">Contact</button>
         </div>
       </nav>
-      <Swiper>
+      <Swiper
+        modules={[EffectCards]}
+        effect="cards"
+        grabCursor={true}
+        className="mySwiper"
+      >
         <SwiperSlide>
           <div className="hero-section w-screen">
             <div
