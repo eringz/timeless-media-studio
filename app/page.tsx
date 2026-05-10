@@ -1,5 +1,5 @@
 "use client";
-
+import Gallery from "@/features/galleries/Gallery";
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
@@ -92,9 +92,8 @@ export default function Home() {
           <div className="rounded-3xl border border-gray-300 p-8 bg-white shadow-sm">Event Coverage</div>
         </div>
       </div>
-      <div className="gallery">
-        gallery ni ron ito ng matapos
-      </div>
+      <Gallery />
+      
       <footer className="p-6 bg-gray-900 text-white text-center">
         Copyright by Frontdesk Team 2026
       </footer>
