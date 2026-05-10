@@ -1,7 +1,3 @@
-// import Image from "next/image";
-//Figma design link:
-//https://www.figma.com/design/AiaWsLW8HXtAqFI3avd4IY/Untitled?node-id=0-1&t=YlV3cvA6KUF7SZtj-1
-
 "use client";
 
 export default function Home() {
@@ -38,7 +34,7 @@ export default function Home() {
       </nav>
       <div className="hero-section w-screen bg-black text-white relative">
         <div
-          className="flex flex-col gap-8 p-24 max-w-6xl mx-auto"
+          className="flex flex-col gap-8 left-24 p-4 w-96 h-fit text-white"
         >
           <p className="text-6xl md:text-8xl font-bold">
             Create Every Moment
@@ -55,7 +51,7 @@ export default function Home() {
           <img 
             className="w-full h-auto rounded-xl shadow-lg"
             src="/images/camera-shot.png"
-            alt="Camera shot"
+            alt="camera shot image"
           />
         </div>
         <div className="flex flex-col gap-8 w-full lg:w-1/2">
@@ -68,7 +64,7 @@ export default function Home() {
           </p>
         </div>
       </div>
-      <div className="services flex flex-col items-center gap-8 p-24 bg-gray-100 text-black">
+      <div className="services flex flex-col items-center h-fit ">
         <h2 className="text-4xl font-bold">Services</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-6xl mx-auto">
           <div className="rounded-3xl border border-gray-300 p-8 bg-white shadow-sm">Photography</div>
@@ -76,13 +72,8 @@ export default function Home() {
           <div className="rounded-3xl border border-gray-300 p-8 bg-white shadow-sm">Event Coverage</div>
         </div>
       </div>
-      <div className="gallery flex flex-col items-center gap-6 p-24 bg-white text-black">
-        <h2 className="text-4xl font-bold">Gallery</h2>
-        <p>gallery ni ron ito</p>
-      </div>
-      <div className="contact flex flex-col items-center gap-4 p-24 bg-black text-white">
-        <h2 className="text-4xl font-bold">Contact</h2>
-        <p>Contact us</p>
+      <div className="gallery">
+        gallery ni ron ito ng matapos
       </div>
       <footer className="p-6 bg-gray-900 text-white text-center">
         Copyright by Frontdesk Team 2026
