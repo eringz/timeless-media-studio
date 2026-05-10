@@ -1,5 +1,5 @@
 "use client";
-
+import Gallery from "@/features/galleries/Gallery";
 import { useEffect, useRef, useState } from 'react';
 
 const WordAnimation = ({ word }: { word: string }) => {
@@ -129,11 +129,9 @@ export default function Home() {
           <div className="rounded-3xl border border-gray-300 p-6 sm:p-8 bg-white shadow-sm hover:shadow-md transition-shadow duration-300 text-center">Event Coverage</div>
         </div>
       </div>
-      <div className="gallery flex flex-col items-center gap-6 sm:gap-8 p-4 sm:p-8 md:p-24 bg-white text-black w-full text-center">
-        <h2 className="text-2xl sm:text-4xl font-bold">Gallery</h2>
-        <p className="text-sm sm:text-base">gallery ni ron ito ng matapos</p>
-      </div>
-      <footer className="p-4 sm:p-6 bg-gray-900 text-white text-center w-full text-xs sm:text-base">
+      <Gallery />
+      
+      <footer className="p-6 bg-gray-900 text-white text-center">
         Copyright by Frontdesk Team 2026
       </footer>
     </div>
