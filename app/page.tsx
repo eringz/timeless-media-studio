@@ -1,5 +1,7 @@
 // import Image from "next/image";
-//
+//Figma design link:
+//https://www.figma.com/design/AiaWsLW8HXtAqFI3avd4IY/Untitled?node-id=0-1&t=YlV3cvA6KUF7SZtj-1
+
 "use client";
 
 export default function Home() {
@@ -40,7 +42,7 @@ export default function Home() {
             src="/images/camera-shot.png"
           />
         </div>
-        <div className="flex flex-col items-center gap-8 w-1/2 group-hover:blur transition duration-300">
+        <div className="flex flex-col items-center gap-8 w-1/2">
           <h2 className="text-4xl font-bold">ABOUT US</h2>
           <p>
             We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
