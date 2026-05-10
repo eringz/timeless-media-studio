@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 export default function Home() {
   const [headerVisible, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const [randomWord, setRandomWord] = useState('Moment');
+
+  const words = ['Moment', 'Memory', 'Story', 'Dream', 'Magic', 'Light', 'Frame', 'Essence', 'Beauty', 'Art', 'Vision', 'Soul'];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +22,15 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * words.length);
+      setRandomWord(words[randomIndex]);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -57,7 +69,7 @@ export default function Home() {
           className="flex flex-col gap-8 left-24 p-4 w-96 h-fit text-white"
         >
           <p className="text-6xl md:text-8xl font-bold">
-            Create Every Moment
+            Create Every <span className="text-blue-500 transition-colors duration-300">{randomWord}</span>
           </p>
           <button
             className="px-8 py-4 w-48 border border-white rounded-full hover:bg-white hover:text-black transition duration-300"
