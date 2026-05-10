@@ -1,4 +1,5 @@
 // import Image from "next/image";
+//
 "use client";
 
 export default function Home() {
@@ -13,7 +14,7 @@ export default function Home() {
         >
           <a>Home</a>
           <a>About</a>
-          <a>Services</a>
+          <button className="hover:bg-gray-700 transition duration-300">Services</button>
           <a>Gallery</a>
           <a>Contact</a>
         </div>
