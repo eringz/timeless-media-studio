@@ -93,9 +93,6 @@ export default function Home() {
         <div
           className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-24 py-8 sm:py-4 w-full sm:w-96"
         >
-          <p className="text-3xl sm:text-6xl md:text-8xl font-bold leading-tight">
-            Create Every <WordAnimation word={randomWord} />
-          </p>
           <button
             className="px-6 sm:px-8 py-3 sm:py-4 w-40 sm:w-48 border border-white rounded-full hover:bg-white hover:text-black transition duration-300 text-sm sm:text-base"
           >
@@ -136,6 +133,11 @@ export default function Home() {
       <footer className="p-4 sm:p-6 bg-gray-900 text-white text-center w-full text-xs sm:text-base">
         Copyright by Frontdesk Team 2026
       </footer>
+      <div className="relative w-full bg-black text-white p-4 min-h-screen flex items-start justify-start">
+        <p className="text-3xl sm:text-6xl md:text-8xl font-bold leading-tight absolute top-0 left-0">
+          Create Every <WordAnimation word={randomWord} />
+        </p>
+      </div>
     </div>
   );
 }
