@@ -1,6 +1,7 @@
 "use client";
 import Gallery from "@/features/galleries/Gallery";
 import { useEffect, useRef, useState } from 'react';
+import Link from "next/link";
 
 const WordAnimation = ({ word }: { word: string }) => {
   const [displayWord, setDisplayWord] = useState(word);
@@ -71,10 +72,13 @@ export default function Home() {
             <span className="relative z-10">Home</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </button>
-          <button className="group relative overflow-hidden rounded-full border border-white px-3 sm:px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-base">
+          <Link
+            href="/about" 
+            className="group relative overflow-hidden rounded-full border border-white px-3 sm:px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-base"
+          >
             <span className="relative z-10">About</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-          </button>
+          </Link>
           <button className="group relative overflow-hidden rounded-full border border-white px-3 sm:px-5 py-2 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-base">
             <span className="relative z-10">Services</span>
             <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
@@ -117,7 +121,7 @@ export default function Home() {
             We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
           </p>
           <p className="text-sm sm:text-base leading-relaxed">
-            From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We don't just take pictures; we preserve legacies, one frame at a time.
+            From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We don't just take pictures; we preserve legacies, one frame at a time. <Link href="/about">See more</Link>
           </p>
         </div>
       </div>
