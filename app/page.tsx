@@ -2,6 +2,31 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+const WordAnimation = ({ word }: { word: string }) => {
+  const [displayWord, setDisplayWord] = useState(word);
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    setAnimate(false);
+    const timer = setTimeout(() => {
+      setDisplayWord(word);
+      setAnimate(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [word]);
+
+  return (
+    <span
+      key={word}
+      className={`text-blue-500 inline-block transition-all duration-500 ${
+        animate ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      {displayWord}
+    </span>
+  );
+};
+
 export default function Home() {
   const [headerVisible, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -69,7 +94,7 @@ export default function Home() {
           className="flex flex-col gap-8 left-24 p-4 w-96 h-fit text-white"
         >
           <p className="text-6xl md:text-8xl font-bold">
-            Create Every <span className="text-blue-500 transition-colors duration-300">{randomWord}</span>
+            Create Every <WordAnimation word={randomWord} />
           </p>
           <button
             className="px-8 py-4 w-48 border border-white rounded-full hover:bg-white hover:text-black transition duration-300"
