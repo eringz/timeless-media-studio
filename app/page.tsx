@@ -19,11 +19,26 @@ export default function Home() {
         <div 
           className="flex gap-20"
         >
-          <button className="hover:bg-gray-700 transition duration-300 rounded-full active:scale-95">Home</button>
-          <button className="hover:bg-gray-700 transition duration-300 rounded-full active:scale-95">About</button>
-          <button className="hover:bg-gray-700 transition duration-300 rounded-full active:scale-95">Services</button>
-          <button className="hover:bg-gray-700 transition duration-300 rounded-full active:scale-95">Gallery</button>
-          <button className="hover:bg-gray-700 transition duration-300 rounded-full active:scale-95">Contact</button>
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+            <span className="relative z-10">Home</span>
+            <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
+          </button>
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+            <span className="relative z-10">About</span>
+            <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
+          </button>
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+            <span className="relative z-10">Services</span>
+            <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
+          </button>
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+            <span className="relative z-10">Gallery</span>
+            <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
+          </button>
+          <button className="group relative overflow-hidden rounded-full border border-white px-5 py-2 transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700">
+            <span className="relative z-10">Contact</span>
+            <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
+          </button>
         </div>
       </nav>
       <Swiper
@@ -41,9 +56,10 @@ export default function Home() {
                 Create Every Moment
               </p>
               <button
-                className="px-8 py-4 w-48 border border-white rounded-full hover:bg-gray-700 transition duration-300 active:scale-95"
+                className="group relative overflow-hidden px-8 py-4 w-48 border border-white rounded-full transition duration-300 active:scale-95 hover:animate-spin hover:bg-gray-700"
               >
-                Book Now
+                <span className="relative z-10">Book Now</span>
+                <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
               </button>
             </div>
           </div>
