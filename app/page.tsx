@@ -19,7 +19,7 @@ export default function Home() {
       </nav>
       <div className="hero-section w-screen">
         <div
-          className="flex flex-col gap-8 absolute left-24 p-4 w-128 h-fit text-white"
+          className="flex flex-col gap-8 left-24 p-4 w-96 h-fit text-white"
         >
           <p className="text-9xl">
             Create Every Moment
@@ -48,7 +48,7 @@ export default function Home() {
           </p>
         </div>
       </div>
-      <div className="services flex flex-col items-center h-120 ">
+      <div className="services flex flex-col items-center h-fit ">
         <h2 className="text-4xl font-bold">Services</h2>
         <div className="cards ">
           <div>Harry - Update 1</div>
