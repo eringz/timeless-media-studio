@@ -1,11 +1,10 @@
 "use client";
+import SectionHeading from "@/components/ui/SectionHeading";
 
 const Gallery = () => {
     return (
         <div className="gallery flex flex-col justify-center mt-8">
-            <h2 className="flex justify-center items-center text-4xl font-bold">
-                <span className="bg-[#101828] px-8 py-4 w-[420px] rounded text-white text-center shadow-xl ">Gallery</span>
-            </h2>
+            <SectionHeading title="Services" >Services</SectionHeading>
             <div className="gallery flex flex-row justify gap-8 px-48 py-8">
                 {/** First Column */}
                 <div className="w-1/3 flex flex-col gap-y-8">
