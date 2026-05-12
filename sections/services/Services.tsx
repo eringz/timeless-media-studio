@@ -1,19 +1,29 @@
+"use client"
 import SectionHeading from "@/components/ui/SectionHeading";
+import EventService from "@/components/ui/EventService";
+
 
 const Services = () => {
     return (
         <div id="services" className="services flex flex-col gap-6 sm:gap-8 p-4 sm:p-8 md:p-24 bg-gray-50 w-full">
             <SectionHeading title="Services" />
+            <div
+                className="flex flex-col gap-12 px-48 w-full "
+            >
+                <div
+                    className="flex gap-12"
+                >   
+                    <EventService name="family" event="VIDEOGRAPHY" />
+                    <EventService name="couple" event="PHOTOGRAPHY" />
+                    <EventService name="corporate" event="EVENT COVERAGE" />
+                </div>
 
-            {/* Full-width Marquee Scrolling Text */}
-            <div className="w-full overflow-hidden bg-black text-white py-4 -mx-4 sm:-mx-8 md:-mx-24">
-                <div className="animate-marquee whitespace-nowrap">
-                    <span className="text-lg sm:text-xl font-medium mr-8">
-                        photography • event coverage • portrait • wedding photography • corporate events • family portraits • graduation ceremonies • birthday celebrations • product photography • real estate photography • fashion shoots • documentary photography • event coverage • portrait sessions • photography services •
-                    </span>
-                    <span className="text-lg sm:text-xl font-medium mr-8">
-                        photography • event coverage • portrait • wedding photography • corporate events • family portraits • graduation ceremonies • birthday celebrations • product photography • real estate photography • fashion shoots • documentary photography • event coverage • portrait sessions • photography services •
-                    </span>
+                <div
+                    className="flex gap-12"
+                >   
+                    <EventService name="family" event="PORTRAIT" />
+                    <EventService name="couple" event="PRE-WEDDING AND ENGAGEMENT SHOOT" />
+                    <EventService name="corporate" event="EDITING"/>
                 </div>
             </div>
         </div>
