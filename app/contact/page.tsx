@@ -151,28 +151,67 @@ export default function ContactUsPage() {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setPendingSubmission({ name, phone, date, packageType, message });
 
-    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-      setFeedback("Google sign-in is not configured. Please contact support.");
+    // Check if all required fields are filled
+    if (!name || !phone || !date || !packageType || !message) {
+      setFeedback("Please fill in all required fields.");
       return;
     }
 
-    if (!googleReady) {
-      setFeedback("Google sign-in is loading. Please wait a moment and try again.");
+    // If Google is configured and ready, use it for sign-in
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (clientId && googleReady && window.google?.accounts?.id) {
+      setPendingSubmission({ name, phone, date, packageType, message });
+      setFeedback("Opening Google sign-in... \nPlease select your account to receive confirmation.");
+      window.google.accounts.id.prompt();
       return;
     }
 
-    const google = window.google;
-    if (!google?.accounts?.id) {
-      setFeedback("Google sign-in is not available. Please refresh the page and try again.");
-      return;
-    }
+    // If Google is not available, submit directly
+    try {
+      const body = {
+        name,
+        phone,
+        date,
+        packageType,
+        message,
+        email: "contact@timeless-media-studio.com" // Default email for direct submissions
+      };
 
-    setFeedback("Opening Google sign-in... \nPlease select your account to receive confirmation.");
-    google.accounts.id.prompt();
+      const res = await fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Unable to send message.");
+      }
+
+      const submission: ContactSubmission = {
+        name,
+        phone,
+        date,
+        packageType,
+        message,
+        email: body.email,
+        timestamp: new Date().toISOString(),
+        id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      };
+      saveContactSubmission(submission);
+
+      setFeedback("Message sent successfully! We'll get back to you soon.");
+      setName("");
+      setPhone("");
+      setDate("");
+      setPackageType("");
+      setMessage("");
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Failed to send message.");
+    }
   };
 
   return (

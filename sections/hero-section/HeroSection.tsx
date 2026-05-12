@@ -47,10 +47,10 @@ const HeroSection = () => {
 
     return (
         <div 
-        className="hero-section w-full bg-black text-white relative pt-20 sm:pt-0 min-h-screen flex items-center"
+        className="hero-section w-full bg-black text-white relative pt-20 sm:pt-0 min-h-screen flex items-center justify-start"
       >
         <div
-          className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-12 py-8 sm:py-4 w-full max-w-md"
+          className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-12 py-8 sm:py-4 w-full max-w-md ml-4 sm:ml-8 md:ml-16"
         >
           <p className="text-3xl sm:text-6xl md:text-7xl font-bold leading-tight">
             Create Every <WordAnimation word={randomWord} />
