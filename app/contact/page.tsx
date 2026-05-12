@@ -128,47 +128,51 @@ export default function ContactUsPage() {
 
   const initializeGoogle = () => {
     const google = window.google;
-    if (!google?.accounts?.id) return;
-    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-      setFeedback("Google client ID is not configured.");
+    if (!google?.accounts?.id) {
+      console.error("Google Identity Services not loaded");
       return;
     }
 
-    google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-      auto_select: false,
-    });
-    setGoogleReady(true);
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID environment variable not set");
+      return;
+    }
+
+    try {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleCredentialResponse,
+        auto_select: false,
+      });
+      setGoogleReady(true);
+    } catch (error) {
+      console.error("Failed to initialize Google Identity Services:", error);
+    }
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setPendingSubmission({ name, phone, date, packageType, message });
-    setFeedback("Opening Google sign-in... \nPlease complete the account chooser to receive confirmation.");
 
-    const google = window.google;
-    if (google?.accounts?.id && googleReady) {
-      google.accounts.id.prompt();
+    if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+      setFeedback("Google sign-in is not configured. Please contact support.");
       return;
     }
 
-    const googleSignInUrl = "https://accounts.google.com/signin/v2/identifier?flowName=GlifWebSignIn&flowEntry=ServiceLogin";
-    const width = 520;
-    const height = 650;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    const popup = window.open(
-      googleSignInUrl,
-      "googleSignIn",
-      `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=${width},height=${height},top=${top},left=${left}`
-    );
-
-    if (popup) {
-      popup.focus();
-    } else {
-      window.location.href = googleSignInUrl;
+    if (!googleReady) {
+      setFeedback("Google sign-in is loading. Please wait a moment and try again.");
+      return;
     }
+
+    const google = window.google;
+    if (!google?.accounts?.id) {
+      setFeedback("Google sign-in is not available. Please refresh the page and try again.");
+      return;
+    }
+
+    setFeedback("Opening Google sign-in... \nPlease select your account to receive confirmation.");
+    google.accounts.id.prompt();
   };
 
   return (

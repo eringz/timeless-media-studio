@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 
@@ -29,6 +30,7 @@ const words = ['Moment', 'Memory', 'Story', 'Dream', 'Magic', 'Light', 'Frame', 
 
 const HeroSection = () => {
     const [randomWord, setRandomWord] = useState('Moment');
+    const router = useRouter();
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -39,17 +41,22 @@ const HeroSection = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleBookNow = () => {
+        router.push('/contact');
+    };
+
     return (
         <div 
         className="hero-section w-full bg-black text-white relative pt-20 sm:pt-0 min-h-screen flex items-center"
       >
         <div
-          className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-24 py-8 sm:py-4 w-full sm:w-96"
+          className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-12 py-8 sm:py-4 w-full max-w-md"
         >
-          <p className="text-3xl sm:text-6xl md:text-8xl font-bold leading-tight">
+          <p className="text-3xl sm:text-6xl md:text-7xl font-bold leading-tight">
             Create Every <WordAnimation word={randomWord} />
           </p>
           <button
+            onClick={handleBookNow}
             className="px-6 sm:px-8 py-3 sm:py-4 w-40 sm:w-48 border border-white rounded-full hover:bg-white hover:text-black transition duration-300 text-sm sm:text-base"
           >
             Book Now
