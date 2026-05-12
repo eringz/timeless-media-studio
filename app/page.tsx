@@ -1,6 +1,4 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
-import Link from "next/link";
 
 import HeroSection from "@/sections/hero-section/HeroSection";
 import AboutSection from "@/sections/about-section/AboutSection";

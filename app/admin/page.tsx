@@ -35,19 +35,39 @@ export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats>(defaultStats);
+  const [contactLogs, setContactLogs] = useState<Array<{
+    id: string;
+    name: string;
+    phone: string;
+    date: string;
+    packageType: string;
+    message: string;
+    email: string;
+    timestamp: string;
+  }>>([]);
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const authenticated = localStorage.getItem('adminAuthenticated') === 'true';
     if (!authenticated) {
       router.push('/admin/login');
       return;
     }
 
-    setIsAuthenticated(true);
-    const savedStats = loadStats();
-    setStats(savedStats);
-    setLoading(false);
+    setTimeout(() => {
+      setIsAuthenticated(true);
+      const savedStats = loadStats();
+      const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
+      const reversedSubmissions = Array.isArray(submissions) ? submissions.reverse() : [];
+
+      setContactLogs(reversedSubmissions);
+      const updatedStats = { ...savedStats, messages: reversedSubmissions.length };
+      setStats(updatedStats);
+      saveStats(updatedStats);
+      setLoading(false);
+    }, 0);
   }, [router]);
 
   const handleLogout = () => {
@@ -66,6 +86,21 @@ export default function AdminPanel() {
   const handleRestoreDefaults = () => {
     setStats(defaultStats);
     saveStats(defaultStats);
+  };
+  const handleClearContactLogs = () => {
+    localStorage.removeItem('contactSubmissions');
+    setContactLogs([]);
+    updateStats({ messages: 0 });
+  };
+
+  const refreshContactLogs = () => {
+    const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
+    setContactLogs(submissions.reverse());
+    updateStats({ messages: submissions.length });
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
   };
 
   if (loading) {
@@ -167,28 +202,58 @@ export default function AdminPanel() {
           </div>
 
           <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Contact Form Submissions</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={refreshContactLogs}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                >
+                  Refresh
+                </button>
+                <button
+                  onClick={handleClearContactLogs}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                >
+                  Clear Logs
+                </button>
+              </div>
+            </div>
             <div className="mt-4 bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-medium text-gray-900">New project added: Wedding Photography</p>
-                    <span className="text-xs text-gray-500">2 hours ago</span>
-                  </div>
-                </li>
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-medium text-gray-900">Images uploaded to portfolio</p>
-                    <span className="text-xs text-gray-500">1 day ago</span>
-                  </div>
-                </li>
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm font-medium text-gray-900">Contact form submission received</p>
-                    <span className="text-xs text-gray-500">3 days ago</span>
-                  </div>
-                </li>
-              </ul>
+              {contactLogs.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-500">
+                  No contact form submissions yet.
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                  {contactLogs.map((log) => (
+                    <li key={log.id} className="px-6 py-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="text-sm font-medium text-gray-900">{log.name}</p>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {log.packageType}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-1">
+                            <span className="font-medium">Phone:</span> {log.phone}
+                          </p>
+                          <p className="text-sm text-gray-600 mb-1">
+                            <span className="font-medium">Date:</span> {log.date}
+                          </p>
+                          <p className="text-sm text-gray-600 mb-2">
+                            <span className="font-medium">Message:</span> {log.message}
+                          </p>
+                        </div>
+                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                          {formatDate(log.timestamp)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>
