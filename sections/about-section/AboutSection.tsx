@@ -1,3 +1,4 @@
+import Image from "next/image";
 
 const AboutSection = () => {
     return (
@@ -6,10 +7,13 @@ const AboutSection = () => {
         >
             {/** About us section photo */}
             <div className="w-full lg:w-1/2">
-                <img 
+                <Image 
                     className="w-full h-auto rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
                     src="/images/camera-shot.png"
                     alt="camera shot image"
+                    width={1200}
+                    height={800}
+                    priority={true}
                 />
             </div>
         
@@ -20,7 +24,7 @@ const AboutSection = () => {
                     We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most.
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed">
-                    From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We don't just take pictures; we preserve legacies, one frame at a time.
+                    From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We do not just take pictures; we preserve legacies, one frame at a time.
                 </p>
             </div>
         </div>

@@ -6,7 +6,6 @@ const WordAnimation = ({ word }: { word: string }) => {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    setAnimate(false);
     const timer = setTimeout(() => {
       setDisplayWord(word);
       setAnimate(true);
@@ -26,14 +25,15 @@ const WordAnimation = ({ word }: { word: string }) => {
   );
 };
 
+const words = ['Moment', 'Memory', 'Story', 'Dream', 'Magic', 'Light', 'Frame', 'Essence', 'Beauty', 'Art', 'Vision', 'Soul'];
+
 const HeroSection = () => {
     const [randomWord, setRandomWord] = useState('Moment');
-    const words = ['Moment', 'Memory', 'Story', 'Dream', 'Magic', 'Light', 'Frame', 'Essence', 'Beauty', 'Art', 'Vision', 'Soul'];
 
     useEffect(() => {
         const interval = setInterval(() => {
-        const randomIndex = Math.floor(Math.random() * words.length);
-        setRandomWord(words[randomIndex]);
+            const randomIndex = Math.floor(Math.random() * words.length);
+            setRandomWord(words[randomIndex]);
         }, 1000);
 
         return () => clearInterval(interval);

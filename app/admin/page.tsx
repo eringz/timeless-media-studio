@@ -35,29 +35,39 @@ export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats>(defaultStats);
-  const [contactLogs, setContactLogs] = useState<any[]>([]);
+  const [contactLogs, setContactLogs] = useState<Array<{
+    id: string;
+    name: string;
+    phone: string;
+    date: string;
+    packageType: string;
+    message: string;
+    email: string;
+    timestamp: string;
+  }>>([]);
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const authenticated = localStorage.getItem('adminAuthenticated') === 'true';
     if (!authenticated) {
       router.push('/admin/login');
       return;
     }
 
-    setIsAuthenticated(true);
-    const savedStats = loadStats();
-    
-    // Load contact form submissions
-    const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
-    setContactLogs(submissions.reverse()); // Show newest first
-    
-    // Update messages count to match contact submissions
-    const updatedStats = { ...savedStats, messages: submissions.length };
-    setStats(updatedStats);
-    saveStats(updatedStats);
-    
-    setLoading(false);
+    setTimeout(() => {
+      setIsAuthenticated(true);
+      const savedStats = loadStats();
+      const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
+      const reversedSubmissions = Array.isArray(submissions) ? submissions.reverse() : [];
+
+      setContactLogs(reversedSubmissions);
+      const updatedStats = { ...savedStats, messages: reversedSubmissions.length };
+      setStats(updatedStats);
+      saveStats(updatedStats);
+      setLoading(false);
+    }, 0);
   }, [router]);
 
   const handleLogout = () => {
