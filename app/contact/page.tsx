@@ -1,22 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Facebook, Instagram } from "lucide-react";
 
-type BookingForm = {
+type FormState = {
   name: string;
-  phone: string;
   email: string;
+  phone: string;
   date: string;
   packageType: string;
   message: string;
 };
 
-export default function BookingPage() {
-  const [form, setForm] = useState<BookingForm>({
+export default function BookingForm() {
+  const [form, setForm] = useState<FormState>({
     name: "",
-    phone: "",
     email: "",
+    phone: "",
     date: "",
     packageType: "",
     message: "",
@@ -25,10 +24,7 @@ export default function BookingPage() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,12 +46,12 @@ export default function BookingPage() {
       JSON.stringify([newBooking, ...existing])
     );
 
-    alert("Booking submitted successfully!");
+    alert("Booking submitted!");
 
     setForm({
       name: "",
-      phone: "",
       email: "",
+      phone: "",
       date: "",
       packageType: "",
       message: "",
@@ -63,16 +59,16 @@ export default function BookingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-6 py-12">
-      <section className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-
-        {/* LEFT SIDE */}
+    <section className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        
+        {/* LEFT TEXT */}
         <div className="px-2 lg:px-10">
-          <p className="text-2xl font-black tracking-tight mb-2">
+          <p className="text-2xl font-black mb-3">
             BOOK NOW!
           </p>
 
-          <h1 className="font-serif text-[64px] sm:text-[82px] lg:text-[92px] leading-[0.82] tracking-[-4px] text-[#bdbdbd] max-w-xl">
+          <h1 className="font-serif text-[#bfbfbf] text-[60px] sm:text-[78px] lg:text-[92px] leading-[0.82] tracking-[-4px]">
             Make your
             <br />
             memories
@@ -82,36 +78,27 @@ export default function BookingPage() {
             with us.
           </h1>
 
-          <div className="h-px bg-[#777] max-w-xl mt-10 mb-5" />
+          <div className="h-px bg-gray-500 max-w-xl mt-10 mb-5" />
 
-          <div className="flex gap-5 justify-center max-w-xl">
-            <a
-              href="#"
-              className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center hover:scale-105 transition"
-            >
-              <Facebook size={28} />
-            </a>
+          <div className="flex justify-center gap-5 max-w-xl">
+            <div className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-3xl font-bold">
+              f
+            </div>
 
-            <a
-              href="#"
-              className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center hover:scale-105 transition"
-            >
-              <Instagram size={28} />
-            </a>
+            <div className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-2xl font-bold">
+              ◎
+            </div>
 
-            <a
-              href="#"
-              className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-2xl font-bold hover:scale-105 transition"
-            >
+            <div className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-2xl font-bold">
               𝕏
-            </a>
+            </div>
           </div>
         </div>
 
-        {/* FORM CARD */}
+        {/* FORM */}
         <form
           onSubmit={handleSubmit}
-          className="bg-[#555] rounded-[22px] p-8 lg:p-9 w-full max-w-md mx-auto shadow-2xl"
+          className="w-full max-w-md mx-auto bg-[#555555] rounded-[22px] p-8 lg:p-9 shadow-2xl"
         >
           <label className="block text-sm font-black mb-2">
             NAME
@@ -119,17 +106,6 @@ export default function BookingPage() {
           <input
             name="name"
             value={form.name}
-            onChange={handleChange}
-            required
-            className="w-full h-11 rounded bg-[#d9d9d9] text-black px-3 mb-2 outline-none"
-          />
-
-          <label className="block text-sm font-black mb-2">
-            PHONE NUMBER
-          </label>
-          <input
-            name="phone"
-            value={form.phone}
             onChange={handleChange}
             required
             className="w-full h-11 rounded bg-[#d9d9d9] text-black px-3 mb-2 outline-none"
@@ -148,11 +124,22 @@ export default function BookingPage() {
           />
 
           <label className="block text-sm font-black mb-2">
+            PHONE NUMBER
+          </label>
+          <input
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            required
+            className="w-full h-11 rounded bg-[#d9d9d9] text-black px-3 mb-2 outline-none"
+          />
+
+          <label className="block text-sm font-black mb-2">
             DATE
           </label>
           <input
-            name="date"
             type="date"
+            name="date"
             value={form.date}
             onChange={handleChange}
             required
@@ -188,8 +175,7 @@ export default function BookingPage() {
             SUBMIT BOOKING
           </button>
         </form>
-
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
