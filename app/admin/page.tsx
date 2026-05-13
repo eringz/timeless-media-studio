@@ -3,15 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const STORAGE_KEY = 'adminStats';
+const CONTACT_KEY = 'contactSubmissions';
+const BOOKING_KEY = 'adminBookingLogs';
 
-const defaultStats = {
-  totalProjects: 12,
-  imagesUploaded: 248,
-  messages: 0,
-};
-
-type Stats = typeof defaultStats;
+type LogStatus = 'pending' | 'approved';
 
 type ContactLog = {
   id: string;
@@ -22,327 +17,247 @@ type ContactLog = {
   message: string;
   email: string;
   timestamp: string;
-  status?: 'pending' | 'approved';
+  status?: LogStatus;
 };
 
-function loadStats(): Stats {
-  if (typeof window === 'undefined') return defaultStats;
-
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : defaultStats;
-  } catch {
-    return defaultStats;
-  }
-}
-
-function saveStats(value: Stats) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-}
+type BookingLog = ContactLog;
 
 export default function AdminPanel() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<Stats>(defaultStats);
-  const [contactLogs, setContactLogs] = useState<ContactLog[]>([]);
   const router = useRouter();
+
+  const [contactLogs, setContactLogs] = useState<ContactLog[]>([]);
+  const [bookingLogs, setBookingLogs] = useState<BookingLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = () => {
+    const contacts = JSON.parse(localStorage.getItem(CONTACT_KEY) || '[]');
+    const bookings = JSON.parse(localStorage.getItem(BOOKING_KEY) || '[]');
+
+    const normalize = (arr: any[]) =>
+      Array.isArray(arr)
+        ? arr.reverse().map((x) => ({
+            ...x,
+            status: x.status || 'pending',
+          }))
+        : [];
+
+    setContactLogs(normalize(contacts));
+    setBookingLogs(normalize(bookings));
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const authenticated =
-      localStorage.getItem('adminAuthenticated') === 'true';
+    const auth = localStorage.getItem('adminAuthenticated');
 
-    if (!authenticated) {
+    if (auth !== 'true') {
       router.push('/admin/login');
       return;
     }
 
-    setTimeout(() => {
-      setIsAuthenticated(true);
+    loadData();
+    setLoading(false);
 
-      const savedStats = loadStats();
-
-      const submissions = JSON.parse(
-        localStorage.getItem('contactSubmissions') || '[]'
-      ) as ContactLog[];
-
-      const normalized = Array.isArray(submissions)
-        ? submissions
-            .reverse()
-            .map((s) => ({
-              ...s,
-              status: s.status || 'pending',
-            }))
-        : [];
-
-      setContactLogs(normalized);
-
-      const updatedStats = {
-        ...savedStats,
-        messages: normalized.length,
-      };
-
-      setStats(updatedStats);
-      saveStats(updatedStats);
-
-      setLoading(false);
-    }, 0);
+    const interval = setInterval(loadData, 2000);
+    return () => clearInterval(interval);
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminAuthenticated');
-    router.push('/admin/login');
+  const updateStorage = (key: string, data: any[]) => {
+    localStorage.setItem(key, JSON.stringify(data));
+    loadData();
   };
 
-  const saveLogs = (updated: ContactLog[]) => {
-    setContactLogs(updated);
-    localStorage.setItem(
-      'contactSubmissions',
-      JSON.stringify(updated)
+  const approve = (id: string, type: 'contact' | 'booking') => {
+    const key = type === 'contact' ? CONTACT_KEY : BOOKING_KEY;
+
+    const data =
+      type === 'contact' ? contactLogs : bookingLogs;
+
+    const updated = data.map((d) =>
+      d.id === id ? { ...d, status: 'approved' } : d
     );
 
-    const updatedStats = {
-      ...stats,
-      messages: updated.length,
-    };
-
-    setStats(updatedStats);
-    saveStats(updatedStats);
+    updateStorage(key, updated);
   };
 
-  const handleApprove = (id: string) => {
-    const updated = contactLogs.map((log) =>
-      log.id === id
-        ? { ...log, status: 'approved' }
-        : log
-    );
+  const remove = (id: string, type: 'contact' | 'booking') => {
+    const key = type === 'contact' ? CONTACT_KEY : BOOKING_KEY;
 
-    saveLogs(updated);
+    const data =
+      type === 'contact' ? contactLogs : bookingLogs;
+
+    const updated = data.filter((d) => d.id !== id);
+
+    updateStorage(key, updated);
   };
 
-  const handleDelete = (id: string) => {
-    const updated = contactLogs.filter(
-      (log) => log.id !== id
-    );
-
-    saveLogs(updated);
-  };
-
-  const handleClearContactLogs = () => {
-    localStorage.removeItem('contactSubmissions');
-    setContactLogs([]);
-    saveLogs([]);
-  };
-
-  const refreshContactLogs = () => {
-    const submissions = JSON.parse(
-      localStorage.getItem('contactSubmissions') || '[]'
-    ) as ContactLog[];
-
-    const normalized = submissions
-      .reverse()
-      .map((s) => ({
-        ...s,
-        status: s.status || 'pending',
-      }));
-
-    setContactLogs(normalized);
-
-    const updatedStats = {
-      ...stats,
-      messages: normalized.length,
-    };
-
-    setStats(updatedStats);
-    saveStats(updatedStats);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleString();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        Loading admin...
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Loading admin panel...
       </div>
     );
   }
 
-  if (!isAuthenticated) return null;
-
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-black text-white">
 
       {/* HEADER */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">
-              Admin Panel
-            </h1>
-            <p className="text-sm text-gray-600">
-              Booking & Content Management
-            </p>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 text-white px-4 py-2 rounded"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      {/* STATS */}
-      <main className="max-w-7xl mx-auto p-6">
-
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-
-          <div className="bg-white p-5 rounded shadow">
-            <p>Total Projects</p>
-            <p className="text-2xl font-bold">
-              {stats.totalProjects}
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded shadow">
-            <p>Images Uploaded</p>
-            <p className="text-2xl font-bold">
-              {stats.imagesUploaded}
-            </p>
-          </div>
-
-          <div className="bg-white p-5 rounded shadow">
-            <p>Messages</p>
-            <p className="text-2xl font-bold">
-              {stats.messages}
-            </p>
-          </div>
-
+      <div className="border-b border-gray-800 p-6 flex justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Admin Panel</h1>
+          <p className="text-gray-400 text-sm">
+            Bookings & Contact Management
+          </p>
         </div>
 
-        {/* ACTIONS */}
-        <div className="bg-white p-5 rounded shadow mb-6">
-          <div className="flex gap-2">
-            <button
-              onClick={refreshContactLogs}
-              className="bg-blue-600 text-white px-3 py-1 rounded"
-            >
-              Refresh
-            </button>
+        <button
+          onClick={() => {
+            localStorage.removeItem('adminAuthenticated');
+            router.push('/admin/login');
+          }}
+          className="bg-red-600 px-4 py-2 rounded"
+        >
+          Logout
+        </button>
+      </div>
 
-            <button
-              onClick={handleClearContactLogs}
-              className="bg-red-600 text-white px-3 py-1 rounded"
-            >
-              Clear Logs
-            </button>
-          </div>
-        </div>
+      {/* GRID */}
+      <div className="max-w-6xl mx-auto p-6 space-y-10">
 
-        {/* BOOKINGS */}
-        <div className="bg-white rounded shadow">
+        {/* CONTACTS */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4">
+            Contact Submissions
+          </h2>
 
-          <div className="p-4 border-b font-semibold">
-            Contact Form Submissions
-          </div>
+          <div className="space-y-4">
+            {contactLogs.map((log) => (
+              <div
+                key={log.id}
+                className="bg-gray-900 border border-gray-800 p-4 rounded-xl"
+              >
+                <div className="flex justify-between">
+                  <div>
+                    <p className="font-bold">{log.name}</p>
 
-          {contactLogs.length === 0 ? (
-            <div className="p-6 text-gray-500">
-              No submissions yet.
-            </div>
-          ) : (
-            <ul className="divide-y">
+                    <p className="text-gray-400 text-sm">
+                      📧 {log.email}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      📞 {log.phone}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      📅 {log.date}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      💬 {log.message}
+                    </p>
 
-              {contactLogs.map((log) => (
-                <li key={log.id} className="p-4">
-
-                  <div className="flex justify-between">
-
-                    <div>
-
-                      <div className="flex gap-2 items-center">
-
-                        <p className="font-semibold">
-                          {log.name}
-                        </p>
-
-                        <span className="text-xs px-2 py-1 bg-blue-100 rounded">
-                          {log.packageType}
-                        </span>
-
-                        <span
-                          className={`text-xs px-2 py-1 rounded ${
-                            log.status === 'approved'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}
-                        >
-                          {log.status || 'pending'}
-                        </span>
-
-                      </div>
-
-                      <p className="text-sm text-gray-600">
-                        📧 {log.email}
-                      </p>
-
-                      <p className="text-sm text-gray-600">
-                        📞 {log.phone}
-                      </p>
-
-                      <p className="text-sm text-gray-600">
-                        📅 {log.date}
-                      </p>
-
-                      <p className="text-sm text-gray-600">
-                        💬 {log.message}
-                      </p>
-
-                      {/* ACTIONS */}
-                      <div className="flex gap-2 mt-2">
-
-                        <button
-                          onClick={() =>
-                            handleApprove(log.id)
-                          }
-                          className="bg-green-600 text-white px-2 py-1 text-xs rounded"
-                        >
-                          Approve
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            handleDelete(log.id)
-                          }
-                          className="bg-red-600 text-white px-2 py-1 text-xs rounded"
-                        >
-                          Delete
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                    <span className="text-xs text-gray-500">
-                      {formatDate(log.timestamp)}
+                    <span
+                      className={`inline-block mt-2 text-xs px-2 py-1 rounded ${
+                        log.status === 'approved'
+                          ? 'bg-green-600'
+                          : 'bg-yellow-600'
+                      }`}
+                    >
+                      {log.status}
                     </span>
-
                   </div>
 
-                </li>
-              ))}
+                  <div className="text-right text-xs text-gray-400">
+                    {formatDate(log.timestamp)}
+                  </div>
+                </div>
 
-            </ul>
-          )}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => approve(log.id, 'contact')}
+                    className="bg-green-600 px-2 py-1 text-xs rounded"
+                  >
+                    Approve
+                  </button>
 
-        </div>
+                  <button
+                    onClick={() => remove(log.id, 'contact')}
+                    className="bg-red-600 px-2 py-1 text-xs rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      </main>
+        {/* BOOKINGS */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4">
+            Booking Requests
+          </h2>
+
+          <div className="space-y-4">
+            {bookingLogs.map((log) => (
+              <div
+                key={log.id}
+                className="bg-gray-900 border border-gray-800 p-4 rounded-xl"
+              >
+                <p className="font-bold">{log.name}</p>
+
+                <p className="text-gray-400 text-sm">
+                  📧 {log.email}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  📞 {log.phone}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  📅 {log.date}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  🧾 {log.packageType}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  💬 {log.message}
+                </p>
+
+                <span
+                  className={`inline-block mt-2 text-xs px-2 py-1 rounded ${
+                    log.status === 'approved'
+                      ? 'bg-green-600'
+                      : 'bg-yellow-600'
+                  }`}
+                >
+                  {log.status}
+                </span>
+
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => approve(log.id, 'booking')}
+                    className="bg-green-600 px-2 py-1 text-xs rounded"
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    onClick={() => remove(log.id, 'booking')}
+                    className="bg-red-600 px-2 py-1 text-xs rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  {formatDate(log.timestamp)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+      </div>
     </div>
   );
 }
