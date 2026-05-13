@@ -4,17 +4,25 @@ import { useState } from "react";
 
 type FormState = {
   name: string;
-  email: string;
   phone: string;
   date: string;
   packageType: string;
   message: string;
 };
 
+type EmailProvider =
+  | "Gmail"
+  | "Yahoo"
+  | "Outlook"
+  | "Hotmail"
+  | "iCloud"
+  | "ProtonMail"
+  | "AOL"
+  | "Other Email Provider";
+
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>({
     name: "",
-    email: "",
     phone: "",
     date: "",
     packageType: "",
@@ -24,6 +32,124 @@ export default function BookingForm() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [dialogEmail, setDialogEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
+  const [emailSuggestion, setEmailSuggestion] = useState("");
+
+  const typoMap: Record<string, string> = {
+    "gmai.com": "gmail.com",
+    "gmial.com": "gmail.com",
+    "gmal.com": "gmail.com",
+    "gmail.con": "gmail.com",
+    "gmail.co": "gmail.com",
+    "gnail.com": "gmail.com",
+    "gmaill.com": "gmail.com",
+    "gmail.cm": "gmail.com",
+
+    "yaho.com": "yahoo.com",
+    "yahho.com": "yahoo.com",
+    "yahoo.con": "yahoo.com",
+    "yahoo.co": "yahoo.com",
+    "yaoo.com": "yahoo.com",
+
+    "outlok.com": "outlook.com",
+    "outloo.com": "outlook.com",
+    "outlook.con": "outlook.com",
+    "outlook.co": "outlook.com",
+
+    "hotmial.com": "hotmail.com",
+    "hotmai.com": "hotmail.com",
+    "hotmail.con": "hotmail.com",
+    "hotmail.co": "hotmail.com",
+
+    "icloud.con": "icloud.com",
+    "iclod.com": "icloud.com",
+    "icoud.com": "icloud.com",
+
+    "protonmail.con": "protonmail.com",
+    "aol.con": "aol.com",
+  };
+
+  const detectProvider = (email: string): EmailProvider | "" => {
+    const domain = email.split("@")[1]?.toLowerCase();
+
+    if (!domain) return "";
+
+    if (domain === "gmail.com") return "Gmail";
+    if (domain === "yahoo.com") return "Yahoo";
+    if (domain === "outlook.com") return "Outlook";
+    if (domain === "hotmail.com") return "Hotmail";
+    if (domain === "icloud.com") return "iCloud";
+    if (domain === "protonmail.com") return "ProtonMail";
+    if (domain === "aol.com") return "AOL";
+
+    return "Other Email Provider";
+  };
+
+  const validateEmail = (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
+      return {
+        valid: false,
+        error: "Email is required.",
+        suggestion: "",
+        provider: "" as EmailProvider | "",
+      };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return {
+        valid: false,
+        error: "Please enter a valid email address.",
+        suggestion: "",
+        provider: "" as EmailProvider | "",
+      };
+    }
+
+    const domain = cleanEmail.split("@")[1];
+    const correctedDomain = typoMap[domain];
+
+    if (correctedDomain) {
+      const suggestedEmail = cleanEmail.replace(domain, correctedDomain);
+
+      return {
+        valid: false,
+        error: "Possible email typo detected.",
+        suggestion: suggestedEmail,
+        provider: detectProvider(suggestedEmail),
+      };
+    }
+
+    return {
+      valid: true,
+      error: "",
+      suggestion: "",
+      provider: detectProvider(cleanEmail),
+    };
+  };
+
+  const handleEmailChange = (value: string) => {
+    setDialogEmail(value);
+
+    const result = validateEmail(value);
+
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+  };
+
+  const applySuggestion = () => {
+    setDialogEmail(emailSuggestion);
+
+    const result = validateEmail(emailSuggestion);
+
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -33,21 +159,30 @@ export default function BookingForm() {
 
   const openEmailDialog = (e: React.FormEvent) => {
     e.preventDefault();
-    setDialogEmail(form.email);
+
+    setDialogEmail("");
+    setEmailError("Email is required.");
+    setEmailSuggestion("");
+    setEmailProvider("");
     setShowEmailDialog(true);
   };
 
   const confirmBooking = async () => {
-    if (!dialogEmail.trim()) {
-      alert("Please enter your email address.");
-      return;
-    }
+    const cleanEmail = dialogEmail.trim().toLowerCase();
+    const result = validateEmail(cleanEmail);
+
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+
+    if (!result.valid) return;
 
     setSending(true);
 
     const newBooking = {
       ...form,
-      email: dialogEmail,
+      email: cleanEmail,
+      emailProvider: result.provider,
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
       status: "pending",
@@ -63,7 +198,7 @@ export default function BookingForm() {
     );
 
     try {
-      await fetch("/api/send-booking-confirmation", {
+      await fetch("/api/send-confirmation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,17 +206,20 @@ export default function BookingForm() {
         body: JSON.stringify(newBooking),
       });
     } catch {
-      console.log("Email API not connected yet.");
+      console.log("Email API is not connected yet.");
     }
 
     setSending(false);
     setShowEmailDialog(false);
 
-    alert("Booking submitted! Confirmation email has been sent.");
+    alert(
+      `Booking submitted! Confirmation sent to ${cleanEmail} ${
+        result.provider ? `(${result.provider})` : ""
+      }.`
+    );
 
     setForm({
       name: "",
-      email: "",
       phone: "",
       date: "",
       packageType: "",
@@ -89,16 +227,18 @@ export default function BookingForm() {
     });
 
     setDialogEmail("");
+    setEmailError("");
+    setEmailSuggestion("");
+    setEmailProvider("");
   };
 
   return (
-    <section className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-        {/* LEFT TEXT */}
+    <section className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-12 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_30%)]" />
+
+      <div className="relative w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
         <div className="px-2 lg:px-10">
-          <p className="text-2xl font-black mb-3 tracking-wide">
-            BOOK NOW!
-          </p>
+          <p className="text-2xl font-black mb-3 tracking-wide">BOOK NOW!</p>
 
           <h1 className="font-serif text-[#c9c9c9] text-[56px] sm:text-[78px] lg:text-[94px] leading-[0.84] tracking-[-4px] drop-shadow-lg">
             Make your
@@ -127,10 +267,9 @@ export default function BookingForm() {
           </div>
         </div>
 
-        {/* FORM */}
         <form
           onSubmit={openEmailDialog}
-          className="w-full max-w-md mx-auto bg-[#4f4f4f]/95 rounded-[28px] p-8 lg:p-9 shadow-[0_25px_80px_rgba(255,255,255,0.08)] border border-white/10 backdrop-blur"
+          className="w-full max-w-md mx-auto bg-[#4f4f4f]/95 rounded-[30px] p-8 lg:p-9 shadow-[0_25px_100px_rgba(255,255,255,0.12)] border border-white/10 backdrop-blur"
         >
           <label className="block text-sm font-black mb-2">NAME</label>
           <input
@@ -138,7 +277,8 @@ export default function BookingForm() {
             value={form.name}
             onChange={handleChange}
             required
-            className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+            placeholder="Your full name"
+            className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           />
 
           <label className="block text-sm font-black mb-2">
@@ -149,7 +289,8 @@ export default function BookingForm() {
             value={form.phone}
             onChange={handleChange}
             required
-            className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+            placeholder="09XXXXXXXXX"
+            className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           />
 
           <label className="block text-sm font-black mb-2">DATE</label>
@@ -168,7 +309,8 @@ export default function BookingForm() {
             value={form.packageType}
             onChange={handleChange}
             required
-            className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+            placeholder="Example: Wedding, Birthday, Event"
+            className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           />
 
           <label className="block text-sm font-black mb-2">MESSAGE</label>
@@ -177,22 +319,27 @@ export default function BookingForm() {
             value={form.message}
             onChange={handleChange}
             required
-            className="w-full h-32 rounded-md bg-[#dedede] text-black px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-white"
+            placeholder="Tell us more about your booking..."
+            className="w-full h-32 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-white"
           />
 
           <button
             type="submit"
-            className="group relative mt-6 w-full overflow-hidden rounded-xl bg-white text-black py-3 font-black tracking-wide transition hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+            className="group relative mt-6 w-full overflow-hidden rounded-xl bg-white text-black py-3 font-black tracking-wide transition duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-[0_10px_30px_rgba(255,255,255,0.18)]"
           >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/10 to-transparent transition group-hover:translate-x-full duration-700" />
-            <span className="relative">SUBMIT BOOKING</span>
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <span className="relative flex items-center justify-center gap-2">
+              SUBMIT BOOKING
+              <span className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </span>
           </button>
         </form>
       </div>
 
-      {/* EMAIL DIALOG */}
       {showEmailDialog && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center px-4">
           <div className="w-full max-w-md rounded-3xl bg-[#505050] border border-white/10 p-6 text-white shadow-2xl">
             <h2 className="text-2xl font-black mb-2">
               Confirm Your Booking
@@ -206,14 +353,52 @@ export default function BookingForm() {
             <input
               type="email"
               value={dialogEmail}
-              onChange={(e) => setDialogEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full h-12 rounded-xl bg-[#e0e0e0] text-black px-4 outline-none focus:ring-2 focus:ring-white mb-4"
-              required
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="example@gmail.com"
+              className="w-full h-12 rounded-xl bg-[#e0e0e0] text-black placeholder:text-gray-600 px-4 outline-none focus:ring-2 focus:ring-white"
             />
 
-            <div className="flex gap-3">
+            {emailProvider && !emailError && (
+              <p className="mt-2 text-sm text-green-300">
+                Detected provider: {emailProvider}
+              </p>
+            )}
+
+            {emailError && (
+              <p className="mt-2 text-sm text-red-300">
+                {emailError}
+              </p>
+            )}
+
+            {emailSuggestion && (
               <button
+                type="button"
+                onClick={applySuggestion}
+                className="mt-2 text-sm text-yellow-300 underline"
+              >
+                Did you mean {emailSuggestion}?
+              </button>
+            )}
+
+            <div className="mt-5 rounded-2xl bg-black/25 p-4 text-sm space-y-1">
+              <p>
+                <span className="text-gray-300">Name:</span> {form.name}
+              </p>
+              <p>
+                <span className="text-gray-300">Phone:</span> {form.phone}
+              </p>
+              <p>
+                <span className="text-gray-300">Date:</span> {form.date}
+              </p>
+              <p>
+                <span className="text-gray-300">Package:</span>{" "}
+                {form.packageType}
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-5">
+              <button
+                type="button"
                 onClick={() => setShowEmailDialog(false)}
                 className="w-1/2 rounded-xl bg-gray-700 py-3 font-bold hover:bg-gray-600 transition"
               >
@@ -221,9 +406,10 @@ export default function BookingForm() {
               </button>
 
               <button
+                type="button"
                 onClick={confirmBooking}
                 disabled={sending}
-                className="w-1/2 rounded-xl bg-white text-black py-3 font-black hover:scale-[1.02] active:scale-[0.98] transition disabled:opacity-60"
+                className="w-1/2 rounded-xl bg-white text-black py-3 font-black hover:scale-[1.03] active:scale-[0.97] transition disabled:opacity-60"
               >
                 {sending ? "SENDING..." : "CONFIRM"}
               </button>
