@@ -33,6 +33,7 @@ export default function AdminPanel() {
 
   const [contactLogs, setContactLogs] = useState<ContactLog[]>([]);
   const [bookingLogs, setBookingLogs] = useState<BookingLog[]>([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   const loadData = () => {
@@ -79,7 +80,6 @@ export default function AdminPanel() {
     status: LogStatus
   ) => {
     const key = type === 'contact' ? CONTACT_KEY : BOOKING_KEY;
-
     const rawData = JSON.parse(localStorage.getItem(key) || '[]') as ContactLog[];
 
     const updated = rawData.map((item) =>
@@ -91,13 +91,27 @@ export default function AdminPanel() {
 
   const remove = (id: string, type: 'contact' | 'booking') => {
     const key = type === 'contact' ? CONTACT_KEY : BOOKING_KEY;
-
     const rawData = JSON.parse(localStorage.getItem(key) || '[]') as ContactLog[];
 
     const updated = rawData.filter((item) => item.id !== id);
 
     updateStorage(key, updated);
   };
+
+  const filterLogs = (logs: ContactLog[]) => {
+    const q = search.toLowerCase().trim();
+
+    if (!q) return logs;
+
+    return logs.filter((log) =>
+      log.confirmationNumber?.toLowerCase().includes(q) ||
+      log.name?.toLowerCase().includes(q) ||
+      log.phone?.toLowerCase().includes(q)
+    );
+  };
+
+  const filteredContactLogs = filterLogs(contactLogs);
+  const filteredBookingLogs = filterLogs(bookingLogs);
 
   const formatDate = (d: string) => {
     if (!d) return 'No date';
@@ -231,16 +245,25 @@ export default function AdminPanel() {
       </div>
 
       <div className="max-w-6xl mx-auto p-6 space-y-10">
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search confirmation number, name, or phone number..."
+            className="w-full h-12 rounded-xl bg-black border border-gray-700 px-4 text-white outline-none focus:border-white"
+          />
+        </div>
+
         <section>
           <h2 className="text-xl font-semibold mb-4">
             Contact Submissions
           </h2>
 
           <div className="space-y-4">
-            {contactLogs.length === 0 ? (
-              <p className="text-gray-500">No contact submissions yet.</p>
+            {filteredContactLogs.length === 0 ? (
+              <p className="text-gray-500">No matching contact submissions.</p>
             ) : (
-              contactLogs.map((log) => renderLogCard(log, 'contact'))
+              filteredContactLogs.map((log) => renderLogCard(log, 'contact'))
             )}
           </div>
         </section>
@@ -251,10 +274,10 @@ export default function AdminPanel() {
           </h2>
 
           <div className="space-y-4">
-            {bookingLogs.length === 0 ? (
-              <p className="text-gray-500">No booking requests yet.</p>
+            {filteredBookingLogs.length === 0 ? (
+              <p className="text-gray-500">No matching booking requests.</p>
             ) : (
-              bookingLogs.map((log) => renderLogCard(log, 'booking'))
+              filteredBookingLogs.map((log) => renderLogCard(log, 'booking'))
             )}
           </div>
         </section>
