@@ -428,7 +428,7 @@ export default function BookingForm() {
             </div>
 
             <a
-              href="/tracker"
+              href="/api"
               className="block w-full bg-black text-white py-3 rounded-xl font-bold mb-3 hover:scale-[1.02] transition"
             >
               Track Booking
