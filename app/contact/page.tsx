@@ -111,17 +111,6 @@ export default function BookingForm() {
             className="w-full h-11 rounded bg-[#d9d9d9] text-black px-3 mb-2 outline-none"
           />
 
-          <label className="block text-sm font-black mb-2">
-            EMAIL
-          </label>
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-            required
-            className="w-full h-11 rounded bg-[#d9d9d9] text-black px-3 mb-2 outline-none"
-          />
 
           <label className="block text-sm font-black mb-2">
             PHONE NUMBER
