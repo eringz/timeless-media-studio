@@ -10,6 +10,13 @@ type FormState = {
   message: string;
 };
 
+type BookingStatus =
+  | "pending"
+  | "approved"
+  | "in_process"
+  | "for_pick_up"
+  | "completed";
+
 type EmailProvider =
   | "Gmail"
   | "Yahoo"
@@ -35,6 +42,7 @@ export default function BookingForm() {
   const [emailError, setEmailError] = useState("");
   const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
   const [emailSuggestion, setEmailSuggestion] = useState("");
+  const [confirmationNumber, setConfirmationNumber] = useState("");
 
   const typoMap: Record<string, string> = {
     "gmai.com": "gmail.com",
@@ -45,34 +53,34 @@ export default function BookingForm() {
     "gnail.com": "gmail.com",
     "gmaill.com": "gmail.com",
     "gmail.cm": "gmail.com",
-
     "yaho.com": "yahoo.com",
     "yahho.com": "yahoo.com",
     "yahoo.con": "yahoo.com",
     "yahoo.co": "yahoo.com",
     "yaoo.com": "yahoo.com",
-
     "outlok.com": "outlook.com",
     "outloo.com": "outlook.com",
     "outlook.con": "outlook.com",
     "outlook.co": "outlook.com",
-
     "hotmial.com": "hotmail.com",
     "hotmai.com": "hotmail.com",
     "hotmail.con": "hotmail.com",
     "hotmail.co": "hotmail.com",
-
     "icloud.con": "icloud.com",
     "iclod.com": "icloud.com",
     "icoud.com": "icloud.com",
-
     "protonmail.con": "protonmail.com",
     "aol.con": "aol.com",
   };
 
+  const generateConfirmationNumber = () => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(100000 + Math.random() * 900000);
+    return `BK-${year}-${random}`;
+  };
+
   const detectProvider = (email: string): EmailProvider | "" => {
     const domain = email.split("@")[1]?.toLowerCase();
-
     if (!domain) return "";
 
     if (domain === "gmail.com") return "Gmail";
@@ -179,13 +187,16 @@ export default function BookingForm() {
 
     setSending(true);
 
+    const generatedConfirmation = generateConfirmationNumber();
+
     const newBooking = {
       ...form,
       email: cleanEmail,
       emailProvider: result.provider,
+      confirmationNumber: generatedConfirmation,
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
-      status: "pending",
+      status: "pending" as BookingStatus,
     };
 
     const existing = JSON.parse(
@@ -211,12 +222,7 @@ export default function BookingForm() {
 
     setSending(false);
     setShowEmailDialog(false);
-
-    alert(
-      `Booking submitted! Confirmation sent to ${cleanEmail} ${
-        result.provider ? `(${result.provider})` : ""
-      }.`
-    );
+    setConfirmationNumber(generatedConfirmation);
 
     setForm({
       name: "",
@@ -252,19 +258,9 @@ export default function BookingForm() {
 
           <div className="h-px bg-gradient-to-r from-gray-400 to-transparent max-w-xl mt-10 mb-5" />
 
-          <div className="flex justify-center gap-5 max-w-xl">
-            <div className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-3xl font-bold hover:scale-110 transition">
-              f
-            </div>
-
-            <div className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-2xl font-bold hover:scale-110 transition">
-              ◎
-            </div>
-
-            <div className="w-12 h-12 rounded-full bg-[#d9d9d9] text-black flex items-center justify-center text-2xl font-bold hover:scale-110 transition">
-              𝕏
-            </div>
-          </div>
+          <p className="text-gray-400 max-w-md">
+            After booking, you will receive a confirmation number for tracking.
+          </p>
         </div>
 
         <form
@@ -347,7 +343,7 @@ export default function BookingForm() {
 
             <p className="text-sm text-gray-200 mb-5">
               Please enter your email address. Your booking details and
-              confirmation will be sent to this email.
+              confirmation number will be sent to this email.
             </p>
 
             <input
@@ -365,9 +361,7 @@ export default function BookingForm() {
             )}
 
             {emailError && (
-              <p className="mt-2 text-sm text-red-300">
-                {emailError}
-              </p>
+              <p className="mt-2 text-sm text-red-300">{emailError}</p>
             )}
 
             {emailSuggestion && (
@@ -414,6 +408,38 @@ export default function BookingForm() {
                 {sending ? "SENDING..." : "CONFIRM"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {confirmationNumber && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4">
+          <div className="w-full max-w-md bg-white text-black rounded-3xl p-6 text-center shadow-2xl">
+            <h2 className="text-2xl font-black mb-2">
+              Booking Submitted!
+            </h2>
+
+            <p className="text-gray-600 mb-4">
+              Save this confirmation number to track your booking:
+            </p>
+
+            <div className="bg-black text-white rounded-xl py-4 text-2xl font-black tracking-widest mb-5">
+              {confirmationNumber}
+            </div>
+
+            <a
+              href="/tracker"
+              className="block w-full bg-black text-white py-3 rounded-xl font-bold mb-3 hover:scale-[1.02] transition"
+            >
+              Track Booking
+            </a>
+
+            <button
+              onClick={() => setConfirmationNumber("")}
+              className="w-full bg-gray-200 py-3 rounded-xl font-bold"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
