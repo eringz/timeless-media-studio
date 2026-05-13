@@ -22,11 +22,9 @@ function saveContactSubmission(submission: ContactSubmission) {
     localStorage.getItem("contactSubmissions") || "[]"
   ) as ContactSubmission[];
 
-  const next = [submission, ...existing];
-
   localStorage.setItem(
     "contactSubmissions",
-    JSON.stringify(next)
+    JSON.stringify([submission, ...existing])
   );
 }
 
@@ -38,22 +36,57 @@ export default function ContactUsPage() {
   const [message, setMessage] = useState("");
 
   const [email, setEmail] = useState("");
-  const [showEmailDialog, setShowEmailDialog] =
-    useState(false);
-
-  const [feedback, setFeedback] = useState("");
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [feedback, setFeedback] = useState("");
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const emailDomains = [
+    "gmail.com",
+    "yahoo.com",
+    "outlook.com",
+    "icloud.com",
+    "hotmail.com",
+  ];
 
   useEffect(() => {
     document.body.classList.add("contact-page");
-
-    return () => {
-      document.body.classList.remove("contact-page");
-    };
+    return () => document.body.classList.remove("contact-page");
   }, []);
 
+  // EMAIL VALIDATION (anti typo + domain rules)
   const isValidEmail = (value: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    const regex =
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!regex.test(value)) return false;
+
+    const blockedTLDs = [".co", ".c", ".cm", ".con", ".cmo"];
+
+    const domain = value.split("@")[1]?.toLowerCase() || "";
+    const tld = "." + domain.split(".").pop();
+
+    if (blockedTLDs.includes(tld)) return false;
+
+    return true;
+  };
+
+  // AUTOCOMPLETE SUGGESTIONS
+  const getEmailSuggestions = (value: string) => {
+    if (!value.includes("@")) return [];
+
+    const [name, domainPart] = value.split("@");
+
+    if (!domainPart) {
+      return emailDomains.map((d) => `${name}@${d}`);
+    }
+
+    return emailDomains
+      .filter((d) =>
+        d.startsWith(domainPart.toLowerCase())
+      )
+      .map((d) => `${name}@${d}`);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -75,16 +108,16 @@ export default function ContactUsPage() {
 
   const confirmBooking = async () => {
     if (!email) {
-      setEmailError("Email address is required.");
+      setEmailError("Email is required.");
       return;
     }
 
     if (!isValidEmail(email)) {
-      setEmailError("Please enter a valid email address.");
+      setEmailError(
+        "Invalid email. Please check spelling (e.g. gmail.com)."
+      );
       return;
     }
-
-    setEmailError("");
 
     try {
       const body = {
@@ -108,30 +141,22 @@ export default function ContactUsPage() {
       );
 
       if (!res.ok) {
-        const errorText = await res.text();
-
         throw new Error(
-          errorText ||
-            "Unable to send confirmation email."
+          await res.text() ||
+            "Unable to send confirmation"
         );
       }
 
       const submission: ContactSubmission = {
         ...body,
         timestamp: new Date().toISOString(),
-        id:
-          typeof crypto !== "undefined" &&
-          typeof crypto.randomUUID === "function"
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`,
+        id: crypto.randomUUID(),
       };
 
       saveContactSubmission(submission);
 
       setFeedback(
-        `Booking confirmed! Confirmation sent to ${email}.`
+        `Booking confirmed! Sent to ${email}`
       );
 
       setName("");
@@ -142,11 +167,11 @@ export default function ContactUsPage() {
       setEmail("");
 
       setShowEmailDialog(false);
-    } catch (error) {
+    } catch (err) {
       setFeedback(
-        error instanceof Error
-          ? error.message
-          : "Failed to send confirmation."
+        err instanceof Error
+          ? err.message
+          : "Error sending booking"
       );
     }
   };
@@ -156,35 +181,30 @@ export default function ContactUsPage() {
       <div className="min-h-screen bg-black text-white py-12 px-4">
         <div className="max-w-[1300px] mx-auto">
 
-          {/* Back Button */}
+          {/* HEADER */}
           <div className="flex justify-end mb-8">
             <Link
               href="/"
-              className="inline-flex items-center rounded-full border border-gray-700 bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
+              className="rounded-full border border-gray-700 bg-gray-900 px-5 py-3 text-sm hover:bg-gray-800"
             >
               Go back home
             </Link>
           </div>
 
-          <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 items-center">
+          {/* FORM */}
+          <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8">
 
-            {/* Left Content */}
-            <div className="bg-transparent rounded-3xl p-10">
-              <span className="text-sm font-semibold uppercase tracking-[0.32em] text-gray-400">
-                BOOK NOW!
+            <div className="p-10">
+              <span className="text-gray-400 uppercase tracking-[0.3em] text-sm">
+                BOOK NOW
               </span>
-
-              <h1
-                className="mt-8 text-5xl font-extrabold leading-tight text-white"
-                style={{ fontFamily: "sans-serif" }}
-              >
-                Make your memories documented with us.
+              <h1 className="mt-6 text-5xl font-bold">
+                Make memories with us
               </h1>
             </div>
 
-            {/* Contact Form */}
-            <div className="bg-gray-900 border border-gray-700 rounded-[32px] p-8 shadow-2xl">
-              <h2 className="text-3xl font-bold text-white mb-6">
+            <div className="bg-gray-900 border border-gray-700 rounded-3xl p-8">
+              <h2 className="text-2xl font-bold mb-6">
                 Contact Form
               </h2>
 
@@ -192,123 +212,70 @@ export default function ContactUsPage() {
                 onSubmit={handleSubmit}
                 className="space-y-5"
               >
-                {/* Name */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">
-                    Name
-                  </label>
+                <input
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) =>
+                    setName(e.target.value)
+                  }
+                  className="w-full p-3 bg-gray-800 rounded-xl"
+                />
 
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) =>
-                      setName(e.target.value)
-                    }
-                    placeholder="Enter your name"
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
-                    required
-                  />
-                </div>
+                <input
+                  placeholder="Phone"
+                  value={phone}
+                  onChange={(e) =>
+                    setPhone(e.target.value)
+                  }
+                  className="w-full p-3 bg-gray-800 rounded-xl"
+                />
 
-                {/* Phone */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">
-                    Phone Number
-                  </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) =>
+                    setDate(e.target.value)
+                  }
+                  className="w-full p-3 bg-gray-800 rounded-xl"
+                />
 
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) =>
-                      setPhone(e.target.value)
-                    }
-                    placeholder="Enter your phone number"
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                {/* Date + Package */}
-                <div className="grid gap-4 lg:grid-cols-2">
-
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-2">
-                      Date
-                    </label>
-
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) =>
-                        setDate(e.target.value)
-                      }
-                      className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-gray-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-2">
-                      Package
-                    </label>
-
-                    <select
-                      value={packageType}
-                      onChange={(e) =>
-                        setPackageType(e.target.value)
-                      }
-                      className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-gray-500 focus:outline-none"
-                      required
-                    >
-                      <option value="">
-                        Select a package
-                      </option>
-
-                      <option value="basic">
-                        Basic
-                      </option>
-
-                      <option value="standard">
-                        Standard
-                      </option>
-
-                      <option value="premium">
-                        Premium
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Message */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">
-                    Message
-                  </label>
-
-                  <textarea
-                    value={message}
-                    onChange={(e) =>
-                      setMessage(e.target.value)
-                    }
-                    placeholder="Write your message"
-                    rows={5}
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
-                    required
-                  />
-                </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  className="w-full rounded-2xl bg-gray-600 py-4 text-lg font-semibold text-white transition duration-200 hover:bg-gray-500 active:scale-95"
+                <select
+                  value={packageType}
+                  onChange={(e) =>
+                    setPackageType(e.target.value)
+                  }
+                  className="w-full p-3 bg-gray-800 rounded-xl"
                 >
+                  <option value="">
+                    Select Package
+                  </option>
+                  <option value="basic">
+                    Basic
+                  </option>
+                  <option value="standard">
+                    Standard
+                  </option>
+                  <option value="premium">
+                    Premium
+                  </option>
+                </select>
+
+                <textarea
+                  placeholder="Message"
+                  value={message}
+                  onChange={(e) =>
+                    setMessage(e.target.value)
+                  }
+                  className="w-full p-3 bg-gray-800 rounded-xl"
+                />
+
+                <button className="w-full bg-gray-600 py-3 rounded-xl">
                   Submit
                 </button>
               </form>
 
-              {/* Feedback */}
               {feedback && (
-                <p className="mt-4 text-sm text-green-300">
+                <p className="mt-4 text-green-300 text-sm">
                   {feedback}
                 </p>
               )}
@@ -317,19 +284,17 @@ export default function ContactUsPage() {
         </div>
       </div>
 
-      {/* EMAIL POPUP DIALOG */}
+      {/* EMAIL DIALOG */}
       {showEmailDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-md border border-gray-700">
 
-          <div className="w-full max-w-md rounded-3xl border border-gray-700 bg-gray-900 p-8 shadow-2xl">
-
-            <h2 className="text-2xl font-bold text-white mb-4">
-              Confirm Booking
+            <h2 className="text-xl font-bold mb-3">
+              Confirm Email
             </h2>
 
-            <p className="text-gray-300 mb-5">
-              Enter the email address where the
-              booking confirmation will be sent.
+            <p className="text-gray-400 mb-4">
+              Enter email for booking confirmation
             </p>
 
             <input
@@ -338,37 +303,63 @@ export default function ContactUsPage() {
               onChange={(e) => {
                 setEmail(e.target.value);
                 setEmailError("");
+                setShowSuggestions(true);
               }}
-              placeholder="Enter your email address"
-              className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
+              onFocus={() =>
+                setShowSuggestions(true)
+              }
+              onBlur={() =>
+                setTimeout(
+                  () =>
+                    setShowSuggestions(false),
+                  150
+                )
+              }
+              className="w-full p-3 bg-gray-800 rounded-xl"
+              placeholder="you@gmail.com"
             />
 
+            {/* Suggestions */}
+            {showSuggestions &&
+              email.includes("@") && (
+                <div className="mt-2 bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
+                  {getEmailSuggestions(email)
+                    .slice(0, 4)
+                    .map((s, i) => (
+                      <div
+                        key={i}
+                        onMouseDown={() => {
+                          setEmail(s);
+                          setShowSuggestions(false);
+                        }}
+                        className="px-3 py-2 hover:bg-gray-700 cursor-pointer text-sm"
+                      >
+                        {s}
+                      </div>
+                    ))}
+                </div>
+              )}
+
             {emailError && (
-              <p className="mt-2 text-sm text-red-400">
+              <p className="text-red-400 text-sm mt-2">
                 {emailError}
               </p>
             )}
 
-            <div className="mt-6 flex gap-3">
+            <div className="flex gap-3 mt-5">
 
-              {/* Cancel */}
               <button
-                type="button"
-                onClick={() => {
-                  setShowEmailDialog(false);
-                  setEmail("");
-                  setEmailError("");
-                }}
-                className="flex-1 rounded-2xl border border-gray-700 bg-gray-800 py-3 text-white transition hover:bg-gray-700"
+                onClick={() =>
+                  setShowEmailDialog(false)
+                }
+                className="flex-1 bg-gray-800 py-2 rounded-xl"
               >
                 Cancel
               </button>
 
-              {/* Confirm */}
               <button
-                type="button"
                 onClick={confirmBooking}
-                className="flex-1 rounded-2xl bg-gray-600 py-3 font-semibold text-white transition hover:bg-gray-500"
+                className="flex-1 bg-gray-600 py-2 rounded-xl"
               >
                 Confirm
               </button>
