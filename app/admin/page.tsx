@@ -9,7 +9,7 @@ const BOOKING_KEY = 'adminBookingLogs';
 type LogStatus =
   | 'pending'
   | 'approved'
-  | 'in_progress'
+  | 'in_process'
   | 'for_pick_up'
   | 'completed';
 
@@ -120,7 +120,7 @@ export default function AdminPanel() {
 
   const statusLabel = (status?: LogStatus) => {
     if (status === 'approved') return 'Approved';
-    if (status === 'in_progress') return 'In Progress';
+    if (status === 'in_process') return 'In Process';
     if (status === 'for_pick_up') return 'For Pick Up';
     if (status === 'completed') return 'Completed';
     return 'Pending';
@@ -128,7 +128,7 @@ export default function AdminPanel() {
 
   const statusClass = (status?: LogStatus) => {
     if (status === 'approved') return 'bg-green-600';
-    if (status === 'in_progress') return 'bg-blue-600';
+    if (status === 'in_process') return 'bg-blue-600';
     if (status === 'for_pick_up') return 'bg-purple-600';
     if (status === 'completed') return 'bg-gray-600';
     return 'bg-yellow-600';
@@ -193,7 +193,7 @@ export default function AdminPanel() {
         </button>
 
         <button
-          onClick={() => updateStatus(log.id, type, 'in_progress')}
+          onClick={() => updateStatus(log.id, type, 'in_process')}
           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded"
         >
           In Progress
