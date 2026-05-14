@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 
 type FormState = {
   name: string;
@@ -27,6 +31,15 @@ type EmailProvider =
   | "AOL"
   | "Other Email Provider";
 
+type BookingLog = FormState & {
+  email: string;
+  emailProvider: EmailProvider | "";
+  confirmationNumber: string;
+  id: string;
+  timestamp: string;
+  status: BookingStatus;
+};
+
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -36,15 +49,26 @@ export default function BookingForm() {
     message: "",
   });
 
-  const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [dialogEmail, setDialogEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [emailProvider, setEmailProvider] = useState<
-    EmailProvider | ""
-  >("");
-  const [emailSuggestion, setEmailSuggestion] = useState("");
-  const [confirmationNumber, setConfirmationNumber] = useState("");
+  const [showEmailDialog, setShowEmailDialog] =
+    useState(false);
+
+  const [dialogEmail, setDialogEmail] =
+    useState("");
+
+  const [sending, setSending] =
+    useState(false);
+
+  const [emailError, setEmailError] =
+    useState("");
+
+  const [emailProvider, setEmailProvider] =
+    useState<EmailProvider | "">("");
+
+  const [emailSuggestion, setEmailSuggestion] =
+    useState("");
+
+  const [confirmationNumber, setConfirmationNumber] =
+    useState("");
 
   const typoMap: Record<string, string> = {
     "gmai.com": "gmail.com",
@@ -55,45 +79,63 @@ export default function BookingForm() {
     "gnail.com": "gmail.com",
     "gmaill.com": "gmail.com",
     "gmail.cm": "gmail.com",
+
     "yaho.com": "yahoo.com",
     "yahho.com": "yahoo.com",
     "yahoo.con": "yahoo.com",
     "yahoo.co": "yahoo.com",
     "yaoo.com": "yahoo.com",
+
     "outlok.com": "outlook.com",
     "outloo.com": "outlook.com",
     "outlook.con": "outlook.com",
     "outlook.co": "outlook.com",
+
     "hotmial.com": "hotmail.com",
     "hotmai.com": "hotmail.com",
     "hotmail.con": "hotmail.com",
     "hotmail.co": "hotmail.com",
+
     "icloud.con": "icloud.com",
     "iclod.com": "icloud.com",
     "icoud.com": "icloud.com",
+
     "protonmail.con": "protonmail.com",
+
     "aol.con": "aol.com",
   };
 
   const generateConfirmationNumber = () => {
     const year = new Date().getFullYear();
-    const random = Math.floor(100000 + Math.random() * 900000);
+
+    const random = Math.floor(
+      100000 + Math.random() * 900000
+    );
+
     return `BK-${year}-${random}`;
   };
 
   const detectProvider = (
     email: string
   ): EmailProvider | "" => {
-    const domain = email.split("@")[1]?.toLowerCase();
+    const domain =
+      email.split("@")[1]?.toLowerCase() || "";
 
     if (!domain) return "";
 
     if (domain === "gmail.com") return "Gmail";
+
     if (domain === "yahoo.com") return "Yahoo";
+
     if (domain === "outlook.com") return "Outlook";
+
     if (domain === "hotmail.com") return "Hotmail";
+
     if (domain === "icloud.com") return "iCloud";
-    if (domain === "protonmail.com") return "ProtonMail";
+
+    if (domain === "protonmail.com")
+      return "ProtonMail";
+
     if (domain === "aol.com") return "AOL";
 
     return "Other Email Provider";
@@ -117,26 +159,32 @@ export default function BookingForm() {
     if (!emailRegex.test(cleanEmail)) {
       return {
         valid: false,
-        error: "Please enter a valid email address.",
+        error:
+          "Please enter a valid email address.",
         suggestion: "",
         provider: "" as EmailProvider | "",
       };
     }
 
-    const domain = cleanEmail.split("@")[1];
+    const domain =
+      cleanEmail.split("@")[1] || "";
+
     const correctedDomain = typoMap[domain];
 
     if (correctedDomain) {
-      const suggestedEmail = cleanEmail.replace(
-        domain,
-        correctedDomain
-      );
+      const suggestedEmail =
+        cleanEmail.replace(
+          domain,
+          correctedDomain
+        );
 
       return {
         valid: false,
         error: "Possible email typo detected.",
         suggestion: suggestedEmail,
-        provider: detectProvider(suggestedEmail),
+        provider: detectProvider(
+          suggestedEmail
+        ),
       };
     }
 
@@ -148,7 +196,9 @@ export default function BookingForm() {
     };
   };
 
-  const handleEmailChange = (value: string) => {
+  const handleEmailChange = (
+    value: string
+  ) => {
     setDialogEmail(value);
 
     const result = validateEmail(value);
@@ -161,7 +211,8 @@ export default function BookingForm() {
   const applySuggestion = () => {
     setDialogEmail(emailSuggestion);
 
-    const result = validateEmail(emailSuggestion);
+    const result =
+      validateEmail(emailSuggestion);
 
     setEmailError(result.error);
     setEmailSuggestion(result.suggestion);
@@ -169,7 +220,7 @@ export default function BookingForm() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
+    e: ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement
     >
   ) => {
@@ -180,7 +231,7 @@ export default function BookingForm() {
   };
 
   const openEmailDialog = (
-    e: React.FormEvent
+    e: FormEvent
   ) => {
     e.preventDefault();
 
@@ -196,7 +247,8 @@ export default function BookingForm() {
       .trim()
       .toLowerCase();
 
-    const result = validateEmail(cleanEmail);
+    const result =
+      validateEmail(cleanEmail);
 
     setEmailError(result.error);
     setEmailSuggestion(result.suggestion);
@@ -209,40 +261,61 @@ export default function BookingForm() {
     const generatedConfirmation =
       generateConfirmationNumber();
 
-    const newBooking = {
+    const newBooking: BookingLog = {
       ...form,
       email: cleanEmail,
       emailProvider: result.provider,
-      confirmationNumber: generatedConfirmation,
+      confirmationNumber:
+        generatedConfirmation,
       id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      status: "pending" as BookingStatus,
+      timestamp:
+        new Date().toISOString(),
+      status: "pending",
     };
 
-    const existing = JSON.parse(
-      localStorage.getItem("adminBookingLogs") || "[]"
-    );
+    const existing: BookingLog[] =
+      JSON.parse(
+        localStorage.getItem(
+          "adminBookingLogs"
+        ) || "[]"
+      );
 
     localStorage.setItem(
       "adminBookingLogs",
-      JSON.stringify([newBooking, ...existing])
+      JSON.stringify([
+        newBooking,
+        ...existing,
+      ])
     );
 
     try {
-      await fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newBooking),
-      });
-    } catch {
-      console.log("Email API is not connected yet.");
+      await fetch(
+        "/api/send-confirmation",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            newBooking
+          ),
+        }
+      );
+    } catch (error) {
+      console.log(
+        "Email API is not connected yet.",
+        error
+      );
     }
 
     setSending(false);
+
     setShowEmailDialog(false);
-    setConfirmationNumber(generatedConfirmation);
+
+    setConfirmationNumber(
+      generatedConfirmation
+    );
 
     setForm({
       name: "",
@@ -336,10 +409,13 @@ export default function BookingForm() {
           <select
             name="packageType"
             value={form.packageType}
-            onChange={(e) =>
+            onChange={(
+              e: ChangeEvent<HTMLSelectElement>
+            ) =>
               setForm({
                 ...form,
-                packageType: e.target.value,
+                packageType:
+                  e.target.value,
               })
             }
             required
@@ -400,28 +476,31 @@ export default function BookingForm() {
             </h2>
 
             <p className="text-sm text-gray-200 mb-5">
-              Please enter your email address.
-              Your booking details and
-              confirmation number will be sent
-              to this email.
+              Please enter your email
+              address. Your booking details
+              and confirmation number will
+              be sent to this email.
             </p>
 
             <input
               type="email"
               value={dialogEmail}
               onChange={(e) =>
-                handleEmailChange(e.target.value)
+                handleEmailChange(
+                  e.target.value
+                )
               }
               placeholder="example@gmail.com"
               className="w-full h-12 rounded-xl bg-[#e0e0e0] text-black placeholder:text-gray-600 px-4 outline-none focus:ring-2 focus:ring-white"
             />
 
-            {emailProvider && !emailError && (
-              <p className="mt-2 text-sm text-green-300">
-                Detected provider:{" "}
-                {emailProvider}
-              </p>
-            )}
+            {emailProvider &&
+              !emailError && (
+                <p className="mt-2 text-sm text-green-300">
+                  Detected provider:{" "}
+                  {emailProvider}
+                </p>
+              )}
 
             {emailError && (
               <p className="mt-2 text-sm text-red-300">
@@ -435,7 +514,8 @@ export default function BookingForm() {
                 onClick={applySuggestion}
                 className="mt-2 text-sm text-yellow-300 underline"
               >
-                Did you mean {emailSuggestion}?
+                Did you mean{" "}
+                {emailSuggestion}?
               </button>
             )}
 
@@ -473,7 +553,9 @@ export default function BookingForm() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowEmailDialog(false)
+                  setShowEmailDialog(
+                    false
+                  )
                 }
                 className="w-1/2 rounded-xl bg-gray-700 py-3 font-bold hover:bg-gray-600 transition"
               >
@@ -503,8 +585,8 @@ export default function BookingForm() {
             </h2>
 
             <p className="text-gray-600 mb-4">
-              Save this confirmation number to
-              track your booking:
+              Save this confirmation number
+              to track your booking:
             </p>
 
             <div className="bg-black text-white rounded-xl py-4 text-2xl font-black tracking-widest mb-5">
@@ -524,7 +606,7 @@ export default function BookingForm() {
               }
               className="w-full bg-gray-200 py-3 rounded-xl font-bold"
             >
-              Closed
+              Close
             </button>
           </div>
         </div>
