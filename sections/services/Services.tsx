@@ -32,14 +32,14 @@ const Services = () => {
 
 
             {/* Marquee Text */}
-            <div className="w-full overflow-hidden bg-black py-4 rounded">
+            <div className="w-full overflow-hidden bg-gray py-4 rounded">
                 <div className="marquee flex whitespace-nowrap">
                     <span className="text-white text-lg font-semibold px-8">
-                        📸 Photography • 🎉 Birthday Events • 💍 Weddings • 🎈 Debuts • 🎤 Concerts • 👨‍👩‍👧 Family Shoot • 🌅 Prenup • 🏖 Travel Photography •
+                         Photography •  Birthday Events •  Weddings •  Debuts •  Concerts •  Family Shoot •  Prenup •  Travel Photography •
                     </span>
 
                     <span className="text-white text-lg font-semibold px-8">
-                        Photography • 🎉 Birthday Events • 💍 Weddings • 🎈 Debuts • 🎤 Concerts • 👨‍👩‍👧 Family Shoot • 🌅 Prenup • 🏖 Travel Photography •
+                         Photography •  Birthday Events •  Weddings •  Debuts •  Concerts •  Family Shoot •  Prenup •  Travel Photography •
                     </span>
                 </div>
             </div>
