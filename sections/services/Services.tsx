@@ -33,37 +33,34 @@ const Services = () => {
             onClick={() => setSelectedService(service)}
             className="group relative w-full text-left rounded-xl overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl active:scale-95"
           >
-            <div className="transition-all duration-500 group-hover:brightness-75">
+            <div className="transition-all duration-500 group-hover:scale-110 group-hover:brightness-75">
               <EventService name={service.name} event={service.event} />
             </div>
 
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
-              <h3 className="text-white text-xl sm:text-2xl font-bold tracking-wide text-center px-4">
-                {service.event}
-              </h3>
-            </div>
+            {/* Hover overlay only, no extra text to avoid double text */}
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all duration-500" />
           </button>
         ))}
       </div>
 
       {selectedService && (
-        <div className="fixed inset-0 z-[999] bg-black/80 flex items-center justify-center p-4">
-          <div className="relative bg-white rounded-2xl p-4 sm:p-6 max-w-3xl w-full animate-zoomIn shadow-2xl">
-            <button
-              onClick={() => setSelectedService(null)}
-              className="absolute -top-4 -right-4 bg-white text-black w-10 h-10 rounded-full font-bold shadow-lg hover:bg-red-600 hover:text-white transition-all duration-300"
-            >
-              ✕
-            </button>
+        <div className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
+          <button
+            onClick={() => setSelectedService(null)}
+            className="absolute top-5 right-5 z-[1000] bg-white text-black w-11 h-11 rounded-full font-bold shadow-lg hover:bg-red-600 hover:text-white transition-all duration-300"
+          >
+            ✕
+          </button>
 
-            <div className="scale-100 rounded-xl overflow-hidden">
+          <div className="relative w-full h-full max-w-6xl flex flex-col items-center justify-center animate-fullZoom">
+            <div className="w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl scale-100">
               <EventService
                 name={selectedService.name}
                 event={selectedService.event}
               />
             </div>
 
-            <h2 className="mt-5 text-center text-2xl sm:text-4xl font-extrabold text-black bg-yellow-300 px-4 py-3 rounded-xl">
+            <h2 className="mt-6 text-center text-2xl sm:text-5xl font-extrabold text-black bg-white/90 backdrop-blur px-6 py-4 rounded-2xl shadow-xl">
               {selectedService.event}
             </h2>
           </div>
@@ -101,10 +98,10 @@ const Services = () => {
           }
         }
 
-        @keyframes zoomIn {
+        @keyframes fullZoom {
           from {
             opacity: 0;
-            transform: scale(0.75);
+            transform: scale(0.45);
           }
 
           to {
@@ -113,8 +110,8 @@ const Services = () => {
           }
         }
 
-        .animate-zoomIn {
-          animation: zoomIn 0.35s ease-out;
+        .animate-fullZoom {
+          animation: fullZoom 0.4s ease-out;
         }
       `}</style>
     </div>
