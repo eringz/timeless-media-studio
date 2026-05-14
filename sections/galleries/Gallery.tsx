@@ -28,7 +28,7 @@ const Gallery = () => {
         return () => clearInterval(interval);
     }, [galleryPhotos.length])
     return (
-        <div className="gallery flex flex-col justify-center mt-8">
+        <div id="gallery" className="gallery flex flex-col justify-center mt-8">
             <SectionHeading title="Gallery"/>
             <div className="hidden gallery xl:flex flex-row justify gap-8 px-48 py-8">
                 {/** First Column */}
