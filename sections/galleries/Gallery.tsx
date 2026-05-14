@@ -34,6 +34,9 @@ const Gallery = () => {
                     <div className="h-[600px] bg-[url(/images/gallery/couple-golf.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" />
                 </div>
             </div>
+            <div className="hidden lg:flex bg-red-100 h-96">
+                Hello
+            </div>
         </div>
     );
 }
