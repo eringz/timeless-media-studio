@@ -1,28 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import Script from "next/script";
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import React, {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        id?: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-            auto_select: boolean;
-          }) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
-
-type PendingSubmission = {
+type FormState = {
   name: string;
   phone: string;
   date: string;
@@ -30,302 +14,552 @@ type PendingSubmission = {
   message: string;
 };
 
-type ContactSubmission = PendingSubmission & {
+type BookingStatus =
+  | "pending"
+  | "approved"
+  | "in_process"
+  | "for_pick_up"
+  | "completed";
+
+type EmailProvider =
+  | "Gmail"
+  | "Yahoo"
+  | "Outlook"
+  | "Hotmail"
+  | "iCloud"
+  | "ProtonMail"
+  | "AOL"
+  | "Other Email Provider";
+
+type BookingLog = FormState & {
   email: string;
-  timestamp: string;
+  emailProvider: EmailProvider | "";
+  confirmationNumber: string;
   id: string;
+  timestamp: string;
+  status: BookingStatus;
 };
 
-function saveContactSubmission(submission: ContactSubmission) {
-  if (typeof window === "undefined") return;
+export default function BookingForm() {
+  const [form, setForm] = useState<FormState>({
+    name: "",
+    phone: "",
+    date: "",
+    packageType: "",
+    message: "",
+  });
 
-  const existing = JSON.parse(localStorage.getItem("contactSubmissions") || "[]") as ContactSubmission[];
-  const next = [submission, ...existing];
-  localStorage.setItem("contactSubmissions", JSON.stringify(next));
-}
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [dialogEmail, setDialogEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
+  const [emailSuggestion, setEmailSuggestion] = useState("");
+  const [confirmationNumber, setConfirmationNumber] = useState("");
 
-function decodeJwt(token: string) {
-  try {
-    const payload = token.split(".")[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const json = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
-        .join("")
-    );
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
+  const typoMap: Record<string, string> = {
+    "gmai.com": "gmail.com",
+    "gmial.com": "gmail.com",
+    "gmal.com": "gmail.com",
+    "gmail.con": "gmail.com",
+    "gmail.co": "gmail.com",
+    "gnail.com": "gmail.com",
+    "gmaill.com": "gmail.com",
+    "gmail.cm": "gmail.com",
+    "yaho.com": "yahoo.com",
+    "yahho.com": "yahoo.com",
+    "yahoo.con": "yahoo.com",
+    "yahoo.co": "yahoo.com",
+    "yaoo.com": "yahoo.com",
+    "outlok.com": "outlook.com",
+    "outloo.com": "outlook.com",
+    "outlook.con": "outlook.com",
+    "outlook.co": "outlook.com",
+    "hotmial.com": "hotmail.com",
+    "hotmai.com": "hotmail.com",
+    "hotmail.con": "hotmail.com",
+    "hotmail.co": "hotmail.com",
+    "icloud.con": "icloud.com",
+    "iclod.com": "icloud.com",
+    "icoud.com": "icloud.com",
+    "protonmail.con": "protonmail.com",
+    "aol.con": "aol.com",
+  };
 
-export default function ContactUsPage() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [date, setDate] = useState("");
-  const [packageType, setPackageType] = useState("");
-  const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const [pendingSubmission, setPendingSubmission] = useState<PendingSubmission | null>(null);
-  const [googleReady, setGoogleReady] = useState(false);
+  const generateConfirmationNumber = () => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(100000 + Math.random() * 900000);
+    return `BK-${year}-${random}`;
+  };
 
-  useEffect(() => {
-    document.body.classList.add("contact-page");
-    return () => {
-      document.body.classList.remove("contact-page");
-    };
-  }, []);
+  const detectProvider = (email: string): EmailProvider | "" => {
+    const domain = email.split("@")[1]?.toLowerCase() || "";
 
-  const handleCredentialResponse = async (response: { credential: string }) => {
-    const payload = decodeJwt(response.credential);
-    if (!payload?.email) {
-      setFeedback("Unable to determine the signed-in Google account email.");
-      return;
-    }
+    if (!domain) return "";
+    if (domain === "gmail.com") return "Gmail";
+    if (domain === "yahoo.com") return "Yahoo";
+    if (domain === "outlook.com") return "Outlook";
+    if (domain === "hotmail.com") return "Hotmail";
+    if (domain === "icloud.com") return "iCloud";
+    if (domain === "protonmail.com") return "ProtonMail";
+    if (domain === "aol.com") return "AOL";
 
-    if (!pendingSubmission) {
-      setFeedback("No pending submission found. Please try again.");
-      return;
-    }
+    return "Other Email Provider";
+  };
 
-    const body = {
-      ...pendingSubmission,
-      email: payload.email,
-    };
+  const validateEmail = (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
 
-    try {
-      const res = await fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Unable to send confirmation email.");
-      }
-
-      const submission: ContactSubmission = {
-        ...pendingSubmission,
-        email: payload.email,
-        timestamp: new Date().toISOString(),
-        id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    if (!cleanEmail) {
+      return {
+        valid: false,
+        error: "Email is required.",
+        suggestion: "",
+        provider: "" as EmailProvider | "",
       };
-      saveContactSubmission(submission);
-
-      setFeedback(`Booking confirmed! Confirmation sent to ${payload.email}. Saved to admin logs.`);
-      setName("");
-      setPhone("");
-      setDate("");
-      setPackageType("");
-      setMessage("");
-      setPendingSubmission(null);
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Failed to send confirmation email.");
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return {
+        valid: false,
+        error: "Please enter a valid email address.",
+        suggestion: "",
+        provider: "" as EmailProvider | "",
+      };
+    }
+
+    const domain = cleanEmail.split("@")[1] || "";
+    const correctedDomain = typoMap[domain];
+
+    if (correctedDomain) {
+      const suggestedEmail = cleanEmail.replace(domain, correctedDomain);
+
+      return {
+        valid: false,
+        error: "Possible email typo detected.",
+        suggestion: suggestedEmail,
+        provider: detectProvider(suggestedEmail),
+      };
+    }
+
+    return {
+      valid: true,
+      error: "",
+      suggestion: "",
+      provider: detectProvider(cleanEmail),
+    };
   };
 
-  const initializeGoogle = () => {
-    const google = window.google;
-    if (!google?.accounts?.id) {
-      console.error("Google Identity Services not loaded");
-      return;
-    }
+  const handleEmailChange = (value: string) => {
+    setDialogEmail(value);
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID environment variable not set");
-      return;
-    }
+    const result = validateEmail(value);
 
-    try {
-      google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleCredentialResponse,
-        auto_select: false,
-      });
-      setGoogleReady(true);
-    } catch (error) {
-      console.error("Failed to initialize Google Identity Services:", error);
-    }
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const applySuggestion = () => {
+    setDialogEmail(emailSuggestion);
+
+    const result = validateEmail(emailSuggestion);
+
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+  };
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const openEmailDialog = (e: FormEvent) => {
     e.preventDefault();
 
-    // Check if all required fields are filled
-    if (!name || !phone || !date || !packageType || !message) {
-      setFeedback("Please fill in all required fields.");
-      return;
-    }
+    setDialogEmail("");
+    setEmailError("Email is required.");
+    setEmailSuggestion("");
+    setEmailProvider("");
+    setShowEmailDialog(true);
+  };
 
-    // If Google is configured and ready, use it for sign-in
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (clientId && googleReady && window.google?.accounts?.id) {
-      setPendingSubmission({ name, phone, date, packageType, message });
-      setFeedback("Opening Google sign-in... \nPlease select your account to receive confirmation.");
-      window.google.accounts.id.prompt();
-      return;
-    }
+  const confirmBooking = async () => {
+    const cleanEmail = dialogEmail.trim().toLowerCase();
+    const result = validateEmail(cleanEmail);
 
-    // If Google is not available, submit directly
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+
+    if (!result.valid) return;
+
+    setSending(true);
+
+    const generatedConfirmation = generateConfirmationNumber();
+
+    const newBooking: BookingLog = {
+      ...form,
+      email: cleanEmail,
+      emailProvider: result.provider,
+      confirmationNumber: generatedConfirmation,
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      status: "pending",
+    };
+
+    const existing: BookingLog[] = JSON.parse(
+      localStorage.getItem("adminBookingLogs") || "[]"
+    );
+
+    localStorage.setItem(
+      "adminBookingLogs",
+      JSON.stringify([newBooking, ...existing])
+    );
+
     try {
-      const body = {
-        name,
-        phone,
-        date,
-        packageType,
-        message,
-        email: "contact@timeless-media-studio.com" // Default email for direct submissions
-      };
-
-      const res = await fetch("/api/send-confirmation", {
+      await fetch("/api/send-confirmation", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newBooking),
       });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Unable to send message.");
-      }
-
-      const submission: ContactSubmission = {
-        name,
-        phone,
-        date,
-        packageType,
-        message,
-        email: body.email,
-        timestamp: new Date().toISOString(),
-        id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      };
-      saveContactSubmission(submission);
-
-      setFeedback("Message sent successfully! We'll get back to you soon.");
-      setName("");
-      setPhone("");
-      setDate("");
-      setPackageType("");
-      setMessage("");
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Failed to send message.");
+      console.log("Email API is not connected yet.", error);
     }
+
+    setSending(false);
+    setShowEmailDialog(false);
+    setConfirmationNumber(generatedConfirmation);
+
+    setForm({
+      name: "",
+      phone: "",
+      date: "",
+      packageType: "",
+      message: "",
+    });
+
+    setDialogEmail("");
+    setEmailError("");
+    setEmailSuggestion("");
+    setEmailProvider("");
   };
 
   return (
-    <>
-      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
-      <div className="min-h-screen bg-black text-white py-12 px-4">
-        <div className="max-w-[1300px] mx-auto">
-          <div className="flex justify-end mb-8">
-            <Link
-              href="/"
-              className="inline-flex items-center rounded-full border border-gray-700 bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Go back home
-            </Link>
-          </div>
-          <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 items-center">
-            <div className="bg-transparent rounded-3xl p-10">
-              <span className="text-sm font-semibold uppercase tracking-[0.32em] text-gray-400">BOOK NOW!</span>
-              <h1 className="mt-8 text-5xl font-sans font-extrabold leading-tight text-white" style={{ fontFamily: "sans-serif" }}>
-                Make your memories documented with us.
-              </h1>
-            </div>
+    <section className="relative min-h-screen overflow-hidden bg-[#050505] px-5 pb-12 pt-28 font-sans text-white sm:px-8 sm:pt-32 lg:pt-36">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.1),transparent_30%)]" />
 
-            <div className="bg-gray-900 border border-gray-700 rounded-[32px] p-8 shadow-2xl">
-              <h2 className="text-3xl font-bold text-white mb-6">Contact Form</h2>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
-                    required
-                  />
-                </div>
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5 blur-3xl" />
 
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">Phone number</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter your phone number"
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
-                    required
-                  />
-                </div>
+      <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:items-center">
+        <div className="flex flex-col justify-center text-center lg:text-left">
+          <p className="mb-4 text-sm font-black uppercase tracking-[0.35em] text-white/70">
+            Book Now
+          </p>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-2">Date</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-gray-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-2">Package</label>
-                    <select
-                      value={packageType}
-                      onChange={(e) => setPackageType(e.target.value)}
-                      className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-gray-500 focus:outline-none"
-                      required
-                    >
-                      <option value="" className="bg-gray-800 text-white">Select a package</option>
-                      <option value="basic" className="bg-gray-800 text-white">Basic</option>
-                      <option value="standard" className="bg-gray-800 text-white">Standard</option>
-                      <option value="premium" className="bg-gray-800 text-white">Premium</option>
-                    </select>
-                  </div>
-                </div>
+          <h1 className="mx-auto max-w-3xl text-[42px] font-black leading-[0.95] tracking-[-0.05em] text-[#d7d7d7] drop-shadow-2xl sm:text-[64px] lg:mx-0 lg:text-[88px]">
+            Make your
+            <br />
+            memories
+            <br />
+            documented
+            <br />
+            with us.
+          </h1>
 
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">Message</label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Write your message"
-                    rows={5}
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
-                    required
-                  />
-                </div>
+          <div className="mx-auto mb-6 mt-8 h-px w-full max-w-xl bg-gradient-to-r from-transparent via-white/60 to-transparent lg:mx-0 lg:bg-gradient-to-r lg:from-white/60 lg:to-transparent" />
 
-                <button
-                  type="submit"
-                  className="w-full rounded-2xl bg-gray-600 py-4 text-lg font-semibold text-white transition duration-200 hover:bg-gray-500 active:scale-95"
+          <p className="mx-auto max-w-md text-base leading-7 text-white/55 lg:mx-0">
+            After booking, you will receive a confirmation number for tracking.
+          </p>
+
+          <div className="mx-auto mt-10 w-full max-w-md rounded-[32px] border border-white/10 bg-white/[0.08] p-5 text-left shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl lg:mx-0 lg:max-w-none sm:p-6">
+            <h3 className="mb-4 text-xl font-black sm:text-2xl">
+              Frequently Asked Questions
+            </h3>
+
+            <div className="space-y-4">
+              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
+                <h4 className="font-black">How do I track my booking?</h4>
+                <p className="mt-1 text-sm leading-6 text-white/60">
+                  Use your confirmation number after submitting your booking.
+                </p>
+                <a href="/api" className="mt-2 inline-block text-sm font-bold underline">
+                  Track booking
+                </a>
+              </div>
+
+              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
+                <h4 className="font-black">What packages are available?</h4>
+                <p className="mt-1 text-sm leading-6 text-white/60">
+                  Basic, Elite, and Premium packages are available.
+                </p>
+                <a
+                  href="/services"
+                  className="mt-2 inline-block text-sm font-bold underline"
                 >
-                  Submit
-                </button>
-              </form>
-              {feedback ? <p className="mt-4 whitespace-pre-line text-sm text-green-300">{feedback}</p> : null}
-            </div>
-          </div>
+                  View services
+                </a>
+              </div>
 
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-white mb-5">Live Maps</h2>
-            <div className="overflow-hidden rounded-[32px] border border-gray-700 shadow-2xl">
-              <iframe
-                title="Live Location Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086988477722!2d-122.41941518468164!3d37.774929679759906!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085818f0ebb8c4f%3A0x44c8f74ee4a5e0ae!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1700000000000"
-                className="h-[260px] w-full border-0 bg-gray-900"
-                allowFullScreen
-                loading="lazy"
-              />
+              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
+                <h4 className="font-black">Can I contact you directly?</h4>
+                <p className="mt-1 text-sm leading-6 text-white/60">
+                  Yes, you can message us for custom bookings or questions.
+                </p>
+                <a
+                  href="/contact"
+                  className="mt-2 inline-block text-sm font-bold underline"
+                >
+                  Contact us
+                </a>
+              </div>
             </div>
           </div>
         </div>
+
+        <div className="mx-auto w-full max-w-md space-y-6 lg:max-w-none">
+          <form
+            onSubmit={openEmailDialog}
+            className="w-full rounded-[32px] border border-white/10 bg-white/[0.08] p-6 shadow-[0_30px_120px_rgba(255,255,255,0.12)] backdrop-blur-2xl transition-all duration-500 hover:border-white/20 hover:bg-white/[0.1] sm:p-9"
+          >
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Name
+            </label>
+
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              placeholder="Your full name"
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Phone Number
+            </label>
+
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+              placeholder="09XXXXXXXXX"
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Date
+            </label>
+
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              required
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Package
+            </label>
+
+            <select
+              name="packageType"
+              value={form.packageType}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                setForm({
+                  ...form,
+                  packageType: e.target.value,
+                })
+              }
+              required
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            >
+              <option value="">Select Package</option>
+              <option value="BASIC PACKAGE - ₱10">BASIC PACKAGE - ₱10</option>
+              <option value="ELITE PACKAGE - ₱20">ELITE PACKAGE - ₱20</option>
+              <option value="PREMIUM PACKAGE - ₱30">
+                PREMIUM PACKAGE - ₱30
+              </option>
+            </select>
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Message
+            </label>
+
+            <textarea
+              name="message"
+              value={form.message}
+              onChange={handleChange}
+              required
+              placeholder="Tell us more about your booking..."
+              className="h-32 w-full resize-none rounded-2xl border border-white/10 bg-white/90 px-4 py-3 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            <button
+              type="submit"
+              className="group relative mt-7 w-full overflow-hidden rounded-2xl bg-white py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_24px_70px_rgba(255,255,255,0.25)] active:translate-y-0 active:scale-[0.96]"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+              <span className="absolute inset-0 scale-0 rounded-2xl bg-black/10 opacity-0 transition-all duration-300 group-active:scale-100 group-active:opacity-100" />
+
+              <span className="relative flex items-center justify-center gap-3">
+                Submit Booking
+                <span className="transition-transform duration-300 group-hover:translate-x-1 group-active:translate-x-2">
+                  →
+                </span>
+              </span>
+            </button>
+          </form>
+
+          <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] p-4 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl">
+            <h3 className="mb-4 text-xl font-black sm:text-2xl">Find Us</h3>
+
+            <div className="overflow-hidden rounded-3xl border border-white/10">
+              <iframe
+                title="Studio Location Map"
+                src="https://www.google.com/maps?q=Quezon%20City%20Philippines&output=embed"
+                className="h-[260px] w-full border-0 sm:h-[320px]"
+                loading="lazy"
+                allowFullScreen
+              />
+            </div>
+
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Quezon+City+Philippines"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 block rounded-2xl bg-white py-3 text-center font-black text-black transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-95"
+            >
+              Open in Google Maps
+            </a>
+          </div>
+        </div>
       </div>
-    </>
+
+      {showEmailDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#141414]/95 p-6 text-white shadow-[0_30px_100px_rgba(0,0,0,0.7)] backdrop-blur-2xl">
+            <h2 className="mb-2 text-2xl font-black">Confirm Your Booking</h2>
+
+            <p className="mb-5 text-sm leading-6 text-white/60">
+              Please enter your email address. Your booking details and
+              confirmation number will be sent to this email.
+            </p>
+
+            <input
+              type="email"
+              value={dialogEmail}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="example@gmail.com"
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            {emailProvider && !emailError && (
+              <p className="mt-2 text-sm font-semibold text-green-300">
+                Detected provider: {emailProvider}
+              </p>
+            )}
+
+            {emailError && (
+              <p className="mt-2 text-sm font-semibold text-red-300">
+                {emailError}
+              </p>
+            )}
+
+            {emailSuggestion && (
+              <button
+                type="button"
+                onClick={applySuggestion}
+                className="mt-2 text-sm font-bold text-yellow-300 underline transition hover:text-yellow-200 active:scale-95"
+              >
+                Did you mean {emailSuggestion}?
+              </button>
+            )}
+
+            <div className="mt-5 space-y-2 rounded-3xl border border-white/10 bg-white/[0.06] p-4 text-sm">
+              <p>
+                <span className="text-white/50">Name:</span> {form.name}
+              </p>
+              <p>
+                <span className="text-white/50">Phone:</span> {form.phone}
+              </p>
+              <p>
+                <span className="text-white/50">Date:</span> {form.date}
+              </p>
+              <p>
+                <span className="text-white/50">Package:</span>{" "}
+                {form.packageType}
+              </p>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowEmailDialog(false)}
+                className="w-1/2 rounded-2xl bg-white/10 py-3 font-bold text-white transition-all duration-300 hover:bg-white/20 active:scale-95"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmBooking}
+                disabled={sending}
+                className="group relative w-1/2 overflow-hidden rounded-2xl bg-white py-3 font-black text-black transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                <span className="relative">
+                  {sending ? "SENDING..." : "CONFIRM"}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmationNumber && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[32px] bg-white p-6 text-center text-black shadow-[0_30px_100px_rgba(255,255,255,0.16)]">
+            <h2 className="mb-2 text-2xl font-black">Booking Submitted!</h2>
+
+            <p className="mb-4 text-sm leading-6 text-gray-600">
+              Save this confirmation number to track your booking:
+            </p>
+
+            <div className="mb-5 rounded-2xl bg-black py-4 text-xl font-black tracking-widest text-white sm:text-2xl">
+              {confirmationNumber}
+            </div>
+
+            <a
+              href="/api"
+              className="mb-3 block w-full rounded-2xl bg-black py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95"
+            >
+              Track Booking
+            </a>
+
+            <button
+              onClick={() => setConfirmationNumber("")}
+              className="w-full rounded-2xl bg-gray-200 py-3 font-bold transition-all duration-300 hover:bg-gray-300 active:scale-95"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
