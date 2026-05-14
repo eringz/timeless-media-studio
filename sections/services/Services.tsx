@@ -8,8 +8,8 @@ const services = [
   { name: "family", event: "VIDEOGRAPHY" },
   { name: "couple", event: "PHOTOGRAPHY" },
   { name: "corporate", event: "EVENT COVERAGE" },
-  { name: "family", event: "PORTRAIT" },
-  { name: "couple", event: "PRE-WEDDING AND ENGAGEMENT SHOOT" },
+  { name: "camera-shot", event: "PORTRAIT" },
+  { name: "camera", event: "PRE-WEDDING AND ENGAGEMENT SHOOT" },
   { name: "corporate", event: "EDITING" },
 ];
 
