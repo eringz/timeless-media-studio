@@ -1,39 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
 @import "tailwindcss";
 
-body {
+:root {
+    /* Optional: para madaling gamitin sa ibang parts */
+    --font-serif: 'DM Serif Display', serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* font-family: var(--font-serif); */
+}
+
+    body {
     margin: 0;
-}
-    .nav-header {
-        position: sticky;
-        top: 0;
-        /* z-index: 100; */
+    background-color: black;
     }
 
-    .hero-section {
-        background-image: url("/images/camera.png");
-        background-size: cover;
-        background-position: center; /* Sinisiguro na laging nasa gitna ang focus */
+        .hero-section {
+        background-image: linear-gradient(to right, rgba(0,0,0,0.8) 20%, rgba(0,0,0,0.2) 100%), 
+                            url("/images/camera.png");
+        background-size: cover; 
+        background-position: center;
         background-repeat: no-repeat;
-        min-height: 100vh; /* Para sakop ang buong screen */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+        background-attachment: fixed; /* Parallax effect para sa extra smoothness */
+        }
+            .dm-serif {
+                font-family: var(--font-serif);
+            }
 
-    .contact-page .nav-header {
-        display: none !important;
-    }
+        /* Button glow effect */
+        button:hover {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+        }
 
-/* Marquee Animation */
-@keyframes marquee {
-    0% {
-        transform: translateX(100%);
-    }
-    100% {
-        transform: translateX(-100%);
-    }
-}
 
-.animate-marquee {
-    animation: marquee 30s linear infinite;
-}
