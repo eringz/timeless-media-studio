@@ -12,29 +12,29 @@ export default function AdminLogin() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Simple authentication - in production, use proper auth
     if (username === 'admin' && password === 'admin123') {
-      localStorage.setItem('adminAuthenticated', 'true');
+      document.cookie = 'adminAuthenticated=true; path=/; max-age=86400; SameSite=Lax';
       router.push('/admin');
-    } else {
-      setError('Invalid credentials');
+      return;
     }
+
+    setError('Invalid credentials');
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
+    <div className="min-h-screen bg-black flex items-center justify-center px-5 pt-28 text-white">
+      <div className="bg-white/10 border border-white/10 p-8 rounded-3xl shadow-2xl w-full max-w-md backdrop-blur-xl">
+        <h1 className="text-3xl font-black text-center mb-6">Admin Login</h1>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-500/20 border border-red-400 text-red-200 px-4 py-3 rounded-xl mb-4">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">
+            <label htmlFor="username" className="block text-sm font-bold mb-2">
               Username
             </label>
             <input
@@ -42,13 +42,13 @@ export default function AdminLogin() {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="border border-white/10 rounded-xl w-full py-3 px-4 text-black outline-none focus:ring-4 focus:ring-white/20"
               required
             />
           </div>
 
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
+            <label htmlFor="password" className="block text-sm font-bold mb-2">
               Password
             </label>
             <input
@@ -56,23 +56,21 @@ export default function AdminLogin() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="border border-white/10 rounded-xl w-full py-3 px-4 text-black outline-none focus:ring-4 focus:ring-white/20"
               required
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
-            >
-              Sign In
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-white py-3 font-black text-black transition hover:scale-[1.02] active:scale-[0.97]"
+          >
+            Sign In
+          </button>
         </form>
 
-        <div className="mt-4 text-center text-sm text-gray-600">
-          <p>Demo credentials:</p>
+        <div className="mt-5 text-center text-sm text-white/50">
+          <p>Demo credentials</p>
           <p>Username: admin</p>
           <p>Password: admin123</p>
         </div>

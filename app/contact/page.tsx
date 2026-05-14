@@ -205,40 +205,51 @@ export default function BookingForm() {
 
     const generatedConfirmation = generateConfirmationNumber();
 
-    const newBooking: BookingLog = {
+    const bookingPayload = {
       ...form,
       email: cleanEmail,
       emailProvider: result.provider,
       confirmationNumber: generatedConfirmation,
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      status: "pending",
+      status: "pending" as BookingStatus,
     };
 
-    const existing: BookingLog[] = JSON.parse(
-      localStorage.getItem("adminBookingLogs") || "[]"
-    );
-
-    localStorage.setItem(
-      "adminBookingLogs",
-      JSON.stringify([newBooking, ...existing])
-    );
-
     try {
+      const bookingResponse = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingPayload),
+      });
+
+      if (!bookingResponse.ok) {
+        const errorData = await bookingResponse.json().catch(() => null);
+        setEmailError(errorData?.error || "Failed to save booking to Supabase.");
+        return;
+      }
+
+      const savedBooking = await bookingResponse.json();
+
       await fetch("/api/send-confirmation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newBooking),
+        body: JSON.stringify({
+          ...bookingPayload,
+          confirmationNumber: savedBooking.confirmation_number || generatedConfirmation,
+        }),
       });
-    } catch (error) {
-      console.log("Email API is not connected yet.", error);
-    }
 
-    setSending(false);
-    setShowEmailDialog(false);
-    setConfirmationNumber(generatedConfirmation);
+      setShowEmailDialog(false);
+      setConfirmationNumber(savedBooking.confirmation_number || generatedConfirmation);
+    } catch (error) {
+      console.error("Booking save failed.", error);
+      setEmailError("Failed to connect to booking database. Please try again.");
+      return;
+    } finally {
+      setSending(false);
+    }
 
     setForm({
       name: "",
