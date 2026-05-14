@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 
-type PackageType = "Basic Package" | "Elite Package" | "Premium Package";
-type PaymentMethod = "Cash" | "GCash" | "Other Payment";
+type FormState = {
+  name: string;
+  phone: string;
+  date: string;
+  packageType: string;
+  message: string;
+};
 
 type BookingStatus =
   | "pending"
@@ -22,20 +27,6 @@ type EmailProvider =
   | "AOL"
   | "Other Email Provider";
 
-type FormState = {
-  name: string;
-  phone: string;
-  date: string;
-  packageType: PackageType | "";
-  message: string;
-};
-
-const packagePrices: Record<PackageType, number> = {
-  "Basic Package": 10,
-  "Elite Package": 20,
-  "Premium Package": 30,
-};
-
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -45,13 +36,13 @@ export default function BookingForm() {
     message: "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [dialogEmail, setDialogEmail] = useState("");
   const [sending, setSending] = useState(false);
-  const [submitError, setSubmitError] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
+  const [emailProvider, setEmailProvider] = useState<
+    EmailProvider | ""
+  >("");
   const [emailSuggestion, setEmailSuggestion] = useState("");
   const [confirmationNumber, setConfirmationNumber] = useState("");
 
@@ -84,18 +75,17 @@ export default function BookingForm() {
     "aol.con": "aol.com",
   };
 
-  const packagePrice = form.packageType ? packagePrices[form.packageType] : 0;
-  const subtotal = packagePrice;
-  const total = subtotal;
-
   const generateConfirmationNumber = () => {
     const year = new Date().getFullYear();
     const random = Math.floor(100000 + Math.random() * 900000);
     return `BK-${year}-${random}`;
   };
 
-  const detectProvider = (email: string): EmailProvider | "" => {
+  const detectProvider = (
+    email: string
+  ): EmailProvider | "" => {
     const domain = email.split("@")[1]?.toLowerCase();
+
     if (!domain) return "";
 
     if (domain === "gmail.com") return "Gmail";
@@ -121,65 +111,8 @@ export default function BookingForm() {
       };
     }
 
-    if (cleanEmail.includes(" ")) {
-      return {
-        valid: false,
-        error: "Email must not contain spaces.",
-        suggestion: "",
-        provider: "" as EmailProvider | "",
-      };
-    }
-
-    if (cleanEmail.includes("..")) {
-      return {
-        valid: false,
-        error: "Email cannot contain double dots.",
-        suggestion: "",
-        provider: "" as EmailProvider | "",
-      };
-    }
-
-    const parts = cleanEmail.split("@");
-
-    if (parts.length !== 2) {
-      return {
-        valid: false,
-        error: "Email must contain only one @ symbol.",
-        suggestion: "",
-        provider: "" as EmailProvider | "",
-      };
-    }
-
-    const [username, domain] = parts;
-
-    if (!username || username.length < 3) {
-      return {
-        valid: false,
-        error: "Email username is too short.",
-        suggestion: "",
-        provider: "" as EmailProvider | "",
-      };
-    }
-
-    if (username.startsWith(".") || username.endsWith(".")) {
-      return {
-        valid: false,
-        error: "Email username cannot start or end with a dot.",
-        suggestion: "",
-        provider: "" as EmailProvider | "",
-      };
-    }
-
-    if (!/^[a-z0-9._%+-]+$/.test(username)) {
-      return {
-        valid: false,
-        error: "Email username contains invalid characters.",
-        suggestion: "",
-        provider: "" as EmailProvider | "",
-      };
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
     if (!emailRegex.test(cleanEmail)) {
       return {
@@ -190,10 +123,14 @@ export default function BookingForm() {
       };
     }
 
+    const domain = cleanEmail.split("@")[1];
     const correctedDomain = typoMap[domain];
 
     if (correctedDomain) {
-      const suggestedEmail = `${username}@${correctedDomain}`;
+      const suggestedEmail = cleanEmail.replace(
+        domain,
+        correctedDomain
+      );
 
       return {
         valid: false,
@@ -233,16 +170,20 @@ export default function BookingForm() {
 
   const handleChange = (
     e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      HTMLInputElement | HTMLTextAreaElement
     >
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const openEmailDialog = (e: React.FormEvent) => {
+  const openEmailDialog = (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
 
-    setSubmitError("");
     setDialogEmail("");
     setEmailError("Email is required.");
     setEmailSuggestion("");
@@ -251,112 +192,70 @@ export default function BookingForm() {
   };
 
   const confirmBooking = async () => {
-    const cleanEmail = dialogEmail.trim().toLowerCase();
+    const cleanEmail = dialogEmail
+      .trim()
+      .toLowerCase();
+
     const result = validateEmail(cleanEmail);
 
     setEmailError(result.error);
     setEmailSuggestion(result.suggestion);
     setEmailProvider(result.provider);
-    setSubmitError("");
 
     if (!result.valid) return;
 
+    setSending(true);
+
+    const generatedConfirmation =
+      generateConfirmationNumber();
+
+    const newBooking = {
+      ...form,
+      email: cleanEmail,
+      emailProvider: result.provider,
+      confirmationNumber: generatedConfirmation,
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      status: "pending" as BookingStatus,
+    };
+
+    const existing = JSON.parse(
+      localStorage.getItem("adminBookingLogs") || "[]"
+    );
+
+    localStorage.setItem(
+      "adminBookingLogs",
+      JSON.stringify([newBooking, ...existing])
+    );
+
     try {
-      setSending(true);
-
-      const generatedConfirmation = generateConfirmationNumber();
-
-      const receipt = {
-        packageName: form.packageType,
-        packagePrice,
-        subtotal,
-        total,
-        currency: "PHP",
-        paymentMethod,
-        paidStatus:
-          paymentMethod === "Cash" ? "cash_on_site" : "pending_payment",
-      };
-
-      const newBooking = {
-        ...form,
-        email: cleanEmail,
-        emailProvider: result.provider,
-        paymentMethod,
-        receipt,
-        confirmationNumber: generatedConfirmation,
-        id:
-          typeof crypto !== "undefined" && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random()}`,
-        timestamp: new Date().toISOString(),
-        status: "pending" as BookingStatus,
-      };
-
-      const existing = JSON.parse(
-        localStorage.getItem("adminBookingLogs") || "[]"
-      );
-
-      localStorage.setItem(
-        "adminBookingLogs",
-        JSON.stringify([newBooking, ...existing])
-      );
-
-      const emailResponse = await fetch("/api/send-confirmation", {
+      await fetch("/api/send-confirmation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newBooking),
       });
-
-      if (!emailResponse.ok) {
-        throw new Error("Failed to send confirmation email.");
-      }
-
-      if (paymentMethod === "GCash" || paymentMethod === "Other Payment") {
-        const paymentResponse = await fetch("/api/create-paymongo-checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newBooking),
-        });
-
-        const data = await paymentResponse.json();
-
-        if (!paymentResponse.ok || !data.checkoutUrl) {
-          throw new Error("Failed to create PayMongo checkout.");
-        }
-
-        window.location.href = data.checkoutUrl;
-        return;
-      }
-
-      setShowEmailDialog(false);
-      setConfirmationNumber(generatedConfirmation);
-
-      setForm({
-        name: "",
-        phone: "",
-        date: "",
-        packageType: "",
-        message: "",
-      });
-
-      setDialogEmail("");
-      setEmailError("");
-      setEmailSuggestion("");
-      setEmailProvider("");
-      setPaymentMethod("Cash");
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong. Please try again."
-      );
-    } finally {
-      setSending(false);
+    } catch {
+      console.log("Email API is not connected yet.");
     }
+
+    setSending(false);
+    setShowEmailDialog(false);
+    setConfirmationNumber(generatedConfirmation);
+
+    setForm({
+      name: "",
+      phone: "",
+      date: "",
+      packageType: "",
+      message: "",
+    });
+
+    setDialogEmail("");
+    setEmailError("");
+    setEmailSuggestion("");
+    setEmailProvider("");
   };
 
   return (
@@ -365,7 +264,9 @@ export default function BookingForm() {
 
       <div className="relative w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
         <div className="px-2 lg:px-10">
-          <p className="text-2xl font-black mb-3 tracking-wide">BOOK NOW!</p>
+          <p className="text-2xl font-black mb-3 tracking-wide">
+            BOOK NOW!
+          </p>
 
           <h1 className="font-serif text-[#c9c9c9] text-[56px] sm:text-[78px] lg:text-[94px] leading-[0.84] tracking-[-4px] drop-shadow-lg">
             Make your
@@ -380,7 +281,8 @@ export default function BookingForm() {
           <div className="h-px bg-gradient-to-r from-gray-400 to-transparent max-w-xl mt-10 mb-5" />
 
           <p className="text-gray-400 max-w-md">
-            After booking, you will receive a confirmation number and receipt.
+            After booking, you will receive a
+            confirmation number for tracking.
           </p>
         </div>
 
@@ -388,7 +290,10 @@ export default function BookingForm() {
           onSubmit={openEmailDialog}
           className="w-full max-w-md mx-auto bg-[#4f4f4f]/95 rounded-[30px] p-8 lg:p-9 shadow-[0_25px_100px_rgba(255,255,255,0.12)] border border-white/10 backdrop-blur"
         >
-          <label className="block text-sm font-black mb-2">NAME</label>
+          <label className="block text-sm font-black mb-2">
+            NAME
+          </label>
+
           <input
             name="name"
             value={form.name}
@@ -398,7 +303,10 @@ export default function BookingForm() {
             className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           />
 
-          <label className="block text-sm font-black mb-2">PHONE NUMBER</label>
+          <label className="block text-sm font-black mb-2">
+            PHONE NUMBER
+          </label>
+
           <input
             name="phone"
             value={form.phone}
@@ -408,7 +316,10 @@ export default function BookingForm() {
             className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           />
 
-          <label className="block text-sm font-black mb-2">DATE</label>
+          <label className="block text-sm font-black mb-2">
+            DATE
+          </label>
+
           <input
             type="date"
             name="date"
@@ -418,50 +329,43 @@ export default function BookingForm() {
             className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           />
 
-          <label className="block text-sm font-black mb-2">PACKAGE</label>
+          <label className="block text-sm font-black mb-2">
+            PACKAGE
+          </label>
+
           <select
             name="packageType"
             value={form.packageType}
-            onChange={handleChange}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                packageType: e.target.value,
+              })
+            }
             required
             className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
           >
-            <option value="">Select package</option>
-            <option value="Basic Package">Basic Package - ₱10</option>
-            <option value="Elite Package">Elite Package - ₱20</option>
-            <option value="Premium Package">Premium Package - ₱30</option>
+            <option value="">
+              Select Package
+            </option>
+
+            <option value="BASIC PACKAGE - ₱10">
+              BASIC PACKAGE - ₱10
+            </option>
+
+            <option value="ELITE PACKAGE - ₱20">
+              ELITE PACKAGE - ₱20
+            </option>
+
+            <option value="PREMIUM PACKAGE - ₱30">
+              PREMIUM PACKAGE - ₱30
+            </option>
           </select>
 
-          {form.packageType && (
-            <div className="rounded-2xl bg-black/30 p-4 mb-3 text-sm border border-white/10">
-              <p className="font-black mb-2">QUOTE BREAKDOWN</p>
-              <p>
-                <span className="text-gray-300">Package:</span>{" "}
-                {form.packageType}
-              </p>
-              <p>
-                <span className="text-gray-300">Price:</span> ₱{packagePrice}
-              </p>
-              <p>
-                <span className="text-gray-300">Subtotal:</span> ₱{subtotal}
-              </p>
-              <p className="font-black text-lg mt-2">Total: ₱{total}</p>
-            </div>
-          )}
+          <label className="block text-sm font-black mb-2">
+            MESSAGE
+          </label>
 
-          <label className="block text-sm font-black mb-2">PAYMENT METHOD</label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-            required
-            className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
-          >
-            <option value="Cash">Cash</option>
-            <option value="GCash">GCash via PayMongo</option>
-            <option value="Other Payment">Other Payment via PayMongo</option>
-          </select>
-
-          <label className="block text-sm font-black mb-2">MESSAGE</label>
           <textarea
             name="message"
             value={form.message}
@@ -476,8 +380,10 @@ export default function BookingForm() {
             className="group relative mt-6 w-full overflow-hidden rounded-xl bg-white text-black py-3 font-black tracking-wide transition duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-[0_10px_30px_rgba(255,255,255,0.18)]"
           >
             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
             <span className="relative flex items-center justify-center gap-2">
               SUBMIT BOOKING
+
               <span className="transition-transform duration-300 group-hover:translate-x-1">
                 →
               </span>
@@ -489,29 +395,38 @@ export default function BookingForm() {
       {showEmailDialog && (
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center px-4">
           <div className="w-full max-w-md rounded-3xl bg-[#505050] border border-white/10 p-6 text-white shadow-2xl">
-            <h2 className="text-2xl font-black mb-2">Confirm Your Booking</h2>
+            <h2 className="text-2xl font-black mb-2">
+              Confirm Your Booking
+            </h2>
 
             <p className="text-sm text-gray-200 mb-5">
-              Please enter your email address. Your booking receipt and
-              confirmation number will be sent to this email.
+              Please enter your email address.
+              Your booking details and
+              confirmation number will be sent
+              to this email.
             </p>
 
             <input
               type="email"
               value={dialogEmail}
-              onChange={(e) => handleEmailChange(e.target.value)}
+              onChange={(e) =>
+                handleEmailChange(e.target.value)
+              }
               placeholder="example@gmail.com"
               className="w-full h-12 rounded-xl bg-[#e0e0e0] text-black placeholder:text-gray-600 px-4 outline-none focus:ring-2 focus:ring-white"
             />
 
             {emailProvider && !emailError && (
               <p className="mt-2 text-sm text-green-300">
-                Detected provider: {emailProvider}
+                Detected provider:{" "}
+                {emailProvider}
               </p>
             )}
 
             {emailError && (
-              <p className="mt-2 text-sm text-red-300">{emailError}</p>
+              <p className="mt-2 text-sm text-red-300">
+                {emailError}
+              </p>
             )}
 
             {emailSuggestion && (
@@ -526,40 +441,41 @@ export default function BookingForm() {
 
             <div className="mt-5 rounded-2xl bg-black/25 p-4 text-sm space-y-1">
               <p>
-                <span className="text-gray-300">Name:</span> {form.name}
+                <span className="text-gray-300">
+                  Name:
+                </span>{" "}
+                {form.name}
               </p>
+
               <p>
-                <span className="text-gray-300">Phone:</span> {form.phone}
+                <span className="text-gray-300">
+                  Phone:
+                </span>{" "}
+                {form.phone}
               </p>
+
               <p>
-                <span className="text-gray-300">Date:</span> {form.date}
+                <span className="text-gray-300">
+                  Date:
+                </span>{" "}
+                {form.date}
               </p>
+
               <p>
-                <span className="text-gray-300">Package:</span>{" "}
+                <span className="text-gray-300">
+                  Package:
+                </span>{" "}
                 {form.packageType}
               </p>
-              <p>
-                <span className="text-gray-300">Payment:</span>{" "}
-                {paymentMethod}
-              </p>
-              <p>
-                <span className="text-gray-300">Subtotal:</span> ₱{subtotal}
-              </p>
-              <p className="font-black text-lg">Total: ₱{total}</p>
             </div>
-
-            {submitError && (
-              <p className="mt-3 text-sm text-red-300 font-bold">
-                {submitError}
-              </p>
-            )}
 
             <div className="flex gap-3 mt-5">
               <button
                 type="button"
-                disabled={sending}
-                onClick={() => setShowEmailDialog(false)}
-                className="w-1/2 rounded-xl bg-gray-700 py-3 font-bold hover:bg-gray-600 transition disabled:opacity-60"
+                onClick={() =>
+                  setShowEmailDialog(false)
+                }
+                className="w-1/2 rounded-xl bg-gray-700 py-3 font-bold hover:bg-gray-600 transition"
               >
                 Cancel
               </button>
@@ -570,7 +486,9 @@ export default function BookingForm() {
                 disabled={sending}
                 className="w-1/2 rounded-xl bg-white text-black py-3 font-black hover:scale-[1.03] active:scale-[0.97] transition disabled:opacity-60"
               >
-                {sending ? "SENDING..." : "CONFIRM"}
+                {sending
+                  ? "SENDING..."
+                  : "CONFIRM"}
               </button>
             </div>
           </div>
@@ -580,18 +498,30 @@ export default function BookingForm() {
       {confirmationNumber && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4">
           <div className="w-full max-w-md bg-white text-black rounded-3xl p-6 text-center shadow-2xl">
-            <h2 className="text-2xl font-black mb-2">Booking Submitted!</h2>
+            <h2 className="text-2xl font-black mb-2">
+              Booking Submitted!
+            </h2>
 
             <p className="text-gray-600 mb-4">
-              Save this confirmation number to track your booking:
+              Save this confirmation number to
+              track your booking:
             </p>
 
             <div className="bg-black text-white rounded-xl py-4 text-2xl font-black tracking-widest mb-5">
               {confirmationNumber}
             </div>
 
+            <a
+              href="/api"
+              className="block w-full bg-black text-white py-3 rounded-xl font-bold mb-3 hover:scale-[1.02] transition"
+            >
+              Track Booking
+            </a>
+
             <button
-              onClick={() => setConfirmationNumber("")}
+              onClick={() =>
+                setConfirmationNumber("")
+              }
               className="w-full bg-gray-200 py-3 rounded-xl font-bold"
             >
               Close
