@@ -524,7 +524,7 @@ export default function BookingForm() {
               }
               className="w-full bg-gray-200 py-3 rounded-xl font-bold"
             >
-              Close
+              Closed
             </button>
           </div>
         </div>
