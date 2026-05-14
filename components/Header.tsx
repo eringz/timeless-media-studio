@@ -1,69 +1,91 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
 import Link from "next/link";
 
 const Header = () => {
-    const [headerVisible, setHeaderVisible] = useState(true);    
-    const lastScrollY = useRef(0);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const lastScrollY = useRef(0);
 
-    useEffect(() => {
-        const handleScroll = () => {
-          const currentScrollY = window.scrollY;
-          if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
-            setHeaderVisible(false);
-          } else {
-            setHeaderVisible(true);
-          }
-          lastScrollY.current = currentScrollY;
-        };
-    
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
 
-    return (
-        <div>
-            <nav
-                className={`nav-header fixed top-0 left-0 right-0 z-50 transform transition-transform duration-500 ease-in-out bg-black ${headerVisible ? 'translate-y-0' : '-translate-y-full'} flex flex-col sm:flex-row justify-between gap-2 p-4 sm:p-8 text-white w-full`}
-            >
-                <div className="text-2xl sm:text-4xl font-bold">Timeless Media Studio</div>
-                <div 
-                    className="flex flex-wrap gap-1 sm:gap-2"
-            >
-                <Link
-                    href="/"
-                    className="group relative overflow-hidden rounded-full border border-white px-2 sm:px-3 py-1 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-sm"
-                >
-                    <span className="relative z-10">Home</span>
-                    <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-                </Link>
-                <Link
-                    href="#about" 
-                    className="group relative overflow-hidden rounded-full border border-white px-2 sm:px-3 py-1 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-sm"
-                >
-                    <span className="relative z-10">About</span>
-                    <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-                </Link>
-                <Link
-                    href="#gallery"
-                    className="group relative overflow-hidden rounded-full border border-white px-2 sm:px-3 py-1 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-sm"
-                >
-                    <span className="relative z-10">Gallery</span>
-                    <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-                </Link>
-                <Link
-                    href="/api"
-                    className="group relative overflow-hidden rounded-full border border-white px-2 sm:px-3 py-1 transition duration-300 active:scale-95 hover:bg-gray-700 text-xs sm:text-sm"
-                >
-                    <span className="relative z-10">Tracking Order</span>
-                    <span className="absolute inset-x-0 bottom-0 h-1 bg-white scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-                </Link>
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setHeaderVisible(false);
+        setMenuOpen(false);
+      } else {
+        setHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "#about" },
+    { name: "Gallery", href: "#gallery" },
+    { name: "Tracking Order", href: "/api" },
+  ];
+
+  return (
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 bg-black text-white transition-transform duration-500 ease-in-out ${
+        headerVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
+      <div className="flex items-center justify-between px-4 py-4 sm:px-8">
+        <div className="text-2xl sm:text-4xl font-bold">
+          Timeless Media Studio
         </div>
-      </nav>
+
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-1 rounded-md border border-white"
+        >
+          <span
+            className={`h-0.5 w-6 bg-white transition-all duration-300 ${
+              menuOpen ? "translate-y-1.5 rotate-45" : ""
+            }`}
+          />
+          <span
+            className={`h-0.5 w-6 bg-white transition-all duration-300 ${
+              menuOpen ? "opacity-0" : "opacity-100"
+            }`}
+          />
+          <span
+            className={`h-0.5 w-6 bg-white transition-all duration-300 ${
+              menuOpen ? "-translate-y-1.5 -rotate-45" : ""
+            }`}
+          />
+        </button>
+      </div>
+
+      <div
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          menuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="flex flex-col items-end gap-3 px-4 pb-5 sm:px-8">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="w-full rounded-full border border-white px-4 py-2 text-right text-sm transition duration-300 hover:bg-white hover:text-black active:scale-95 sm:w-60"
+            >
+              {link.name}
+            </Link>
+          ))}
         </div>
-    );  
-}
+      </div>
+    </nav>
+  );
+};
 
 export default Header;
