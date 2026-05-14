@@ -49,13 +49,26 @@ export default function BookingForm() {
     message: "",
   });
 
-  const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [dialogEmail, setDialogEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
-  const [emailSuggestion, setEmailSuggestion] = useState("");
-  const [confirmationNumber, setConfirmationNumber] = useState("");
+  const [showEmailDialog, setShowEmailDialog] =
+    useState(false);
+
+  const [dialogEmail, setDialogEmail] =
+    useState("");
+
+  const [sending, setSending] =
+    useState(false);
+
+  const [emailError, setEmailError] =
+    useState("");
+
+  const [emailProvider, setEmailProvider] =
+    useState<EmailProvider | "">("");
+
+  const [emailSuggestion, setEmailSuggestion] =
+    useState("");
+
+  const [confirmationNumber, setConfirmationNumber] =
+    useState("");
 
   const typoMap: Record<string, string> = {
     "gmai.com": "gmail.com",
@@ -88,20 +101,29 @@ export default function BookingForm() {
 
   const generateConfirmationNumber = () => {
     const year = new Date().getFullYear();
-    const random = Math.floor(100000 + Math.random() * 900000);
+
+    const random = Math.floor(
+      100000 + Math.random() * 900000
+    );
+
     return `BK-${year}-${random}`;
   };
 
-  const detectProvider = (email: string): EmailProvider | "" => {
-    const domain = email.split("@")[1]?.toLowerCase() || "";
+  const detectProvider = (
+    email: string
+  ): EmailProvider | "" => {
+    const domain =
+      email.split("@")[1]?.toLowerCase() || "";
 
     if (!domain) return "";
+
     if (domain === "gmail.com") return "Gmail";
     if (domain === "yahoo.com") return "Yahoo";
     if (domain === "outlook.com") return "Outlook";
     if (domain === "hotmail.com") return "Hotmail";
     if (domain === "icloud.com") return "iCloud";
-    if (domain === "protonmail.com") return "ProtonMail";
+    if (domain === "protonmail.com")
+      return "ProtonMail";
     if (domain === "aol.com") return "AOL";
 
     return "Other Email Provider";
@@ -119,28 +141,38 @@ export default function BookingForm() {
       };
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
     if (!emailRegex.test(cleanEmail)) {
       return {
         valid: false,
-        error: "Please enter a valid email address.",
+        error:
+          "Please enter a valid email address.",
         suggestion: "",
         provider: "" as EmailProvider | "",
       };
     }
 
-    const domain = cleanEmail.split("@")[1] || "";
+    const domain =
+      cleanEmail.split("@")[1] || "";
+
     const correctedDomain = typoMap[domain];
 
     if (correctedDomain) {
-      const suggestedEmail = cleanEmail.replace(domain, correctedDomain);
+      const suggestedEmail =
+        cleanEmail.replace(
+          domain,
+          correctedDomain
+        );
 
       return {
         valid: false,
         error: "Possible email typo detected.",
         suggestion: suggestedEmail,
-        provider: detectProvider(suggestedEmail),
+        provider: detectProvider(
+          suggestedEmail
+        ),
       };
     }
 
@@ -152,7 +184,9 @@ export default function BookingForm() {
     };
   };
 
-  const handleEmailChange = (value: string) => {
+  const handleEmailChange = (
+    value: string
+  ) => {
     setDialogEmail(value);
 
     const result = validateEmail(value);
@@ -165,7 +199,8 @@ export default function BookingForm() {
   const applySuggestion = () => {
     setDialogEmail(emailSuggestion);
 
-    const result = validateEmail(emailSuggestion);
+    const result =
+      validateEmail(emailSuggestion);
 
     setEmailError(result.error);
     setEmailSuggestion(result.suggestion);
@@ -173,7 +208,9 @@ export default function BookingForm() {
   };
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement
+    >
   ) => {
     setForm({
       ...form,
@@ -181,7 +218,9 @@ export default function BookingForm() {
     });
   };
 
-  const openEmailDialog = (e: FormEvent) => {
+  const openEmailDialog = (
+    e: FormEvent
+  ) => {
     e.preventDefault();
 
     setDialogEmail("");
@@ -192,8 +231,12 @@ export default function BookingForm() {
   };
 
   const confirmBooking = async () => {
-    const cleanEmail = dialogEmail.trim().toLowerCase();
-    const result = validateEmail(cleanEmail);
+    const cleanEmail = dialogEmail
+      .trim()
+      .toLowerCase();
+
+    const result =
+      validateEmail(cleanEmail);
 
     setEmailError(result.error);
     setEmailSuggestion(result.suggestion);
@@ -203,42 +246,64 @@ export default function BookingForm() {
 
     setSending(true);
 
-    const generatedConfirmation = generateConfirmationNumber();
+    const generatedConfirmation =
+      generateConfirmationNumber();
 
     const newBooking: BookingLog = {
       ...form,
       email: cleanEmail,
       emailProvider: result.provider,
-      confirmationNumber: generatedConfirmation,
+      confirmationNumber:
+        generatedConfirmation,
       id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
+      timestamp:
+        new Date().toISOString(),
       status: "pending",
     };
 
-    const existing: BookingLog[] = JSON.parse(
-      localStorage.getItem("adminBookingLogs") || "[]"
-    );
+    const existing: BookingLog[] =
+      JSON.parse(
+        localStorage.getItem(
+          "adminBookingLogs"
+        ) || "[]"
+      );
 
     localStorage.setItem(
       "adminBookingLogs",
-      JSON.stringify([newBooking, ...existing])
+      JSON.stringify([
+        newBooking,
+        ...existing,
+      ])
     );
 
     try {
-      await fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newBooking),
-      });
+      await fetch(
+        "/api/send-confirmation",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            newBooking
+          ),
+        }
+      );
     } catch (error) {
-      console.log("Email API is not connected yet.", error);
+      console.log(
+        "Email API is not connected yet.",
+        error
+      );
     }
 
     setSending(false);
+
     setShowEmailDialog(false);
-    setConfirmationNumber(generatedConfirmation);
+
+    setConfirmationNumber(
+      generatedConfirmation
+    );
 
     setForm({
       name: "",
@@ -260,8 +325,9 @@ export default function BookingForm() {
 
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5 blur-3xl" />
 
-      <div className="relative mx-auto grid min-h-[calc(100vh-6rem)] w-full max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2">
-        <div className="px-1 lg:px-8">
+      <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 lg:grid-cols-2">
+        {/* LEFT SIDE */}
+        <div className="flex flex-col justify-center">
           <p className="mb-4 text-sm font-black uppercase tracking-[0.35em] text-white/70">
             Book Now
           </p>
@@ -279,133 +345,246 @@ export default function BookingForm() {
           <div className="mb-6 mt-10 h-px max-w-xl bg-gradient-to-r from-white/60 to-transparent" />
 
           <p className="max-w-md text-base leading-7 text-white/55">
-            After booking, you will receive a confirmation number for tracking.
+            After booking, you will receive a
+            confirmation number for tracking.
           </p>
+
+          {/* FAQ CARD */}
+          <div className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.08] p-6 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl">
+            <h3 className="mb-4 text-2xl font-black">
+              Frequently Asked Questions
+            </h3>
+
+            <div className="space-y-4">
+              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
+                <h4 className="font-black">
+                  How do I track my booking?
+                </h4>
+
+                <p className="mt-1 text-sm text-white/60">
+                  Use your confirmation
+                  number after submitting
+                  your booking.
+                </p>
+
+                <a
+                  href="/api"
+                  className="mt-2 inline-block text-sm font-bold underline"
+                >
+                  Track booking
+                </a>
+              </div>
+
+              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
+                <h4 className="font-black">
+                  What packages are available?
+                </h4>
+
+                <p className="mt-1 text-sm text-white/60">
+                  Basic, Elite, and Premium
+                  packages are available.
+                </p>
+
+                <a
+                  href="/services"
+                  className="mt-2 inline-block text-sm font-bold underline"
+                >
+                  View services
+                </a>
+              </div>
+
+              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
+                <h4 className="font-black">
+                  Can I contact you directly?
+                </h4>
+
+                <p className="mt-1 text-sm text-white/60">
+                  Yes, you can message us for
+                  custom bookings or
+                  questions.
+                </p>
+
+                <a
+                  href="/contact"
+                  className="mt-2 inline-block text-sm font-bold underline"
+                >
+                  Contact us
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <form
-          onSubmit={openEmailDialog}
-          className="mx-auto w-full max-w-md rounded-[32px] border border-white/10 bg-white/[0.08] p-7 shadow-[0_30px_120px_rgba(255,255,255,0.12)] backdrop-blur-2xl transition-all duration-500 hover:border-white/20 hover:bg-white/[0.1] sm:p-9"
-        >
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
-            Name
-          </label>
-
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            placeholder="Your full name"
-            className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
-          />
-
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
-            Phone Number
-          </label>
-
-          <input
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            required
-            placeholder="09XXXXXXXXX"
-            className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
-          />
-
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
-            Date
-          </label>
-
-          <input
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            required
-            className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
-          />
-
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
-            Package
-          </label>
-
-          <select
-            name="packageType"
-            value={form.packageType}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-              setForm({
-                ...form,
-                packageType: e.target.value,
-              })
-            }
-            required
-            className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+        {/* RIGHT SIDE */}
+        <div className="space-y-6">
+          {/* BOOKING FORM */}
+          <form
+            onSubmit={openEmailDialog}
+            className="w-full rounded-[32px] border border-white/10 bg-white/[0.08] p-7 shadow-[0_30px_120px_rgba(255,255,255,0.12)] backdrop-blur-2xl transition-all duration-500 hover:border-white/20 hover:bg-white/[0.1] sm:p-9"
           >
-            <option value="">Select Package</option>
-            <option value="BASIC PACKAGE - ₱10">BASIC PACKAGE - ₱10</option>
-            <option value="ELITE PACKAGE - ₱20">ELITE PACKAGE - ₱20</option>
-            <option value="PREMIUM PACKAGE - ₱30">
-              PREMIUM PACKAGE - ₱30
-            </option>
-          </select>
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Name
+            </label>
 
-          <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
-            Message
-          </label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              placeholder="Your full name"
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
 
-          <textarea
-            name="message"
-            value={form.message}
-            onChange={handleChange}
-            required
-            placeholder="Tell us more about your booking..."
-            className="h-32 w-full resize-none rounded-2xl border border-white/10 bg-white/90 px-4 py-3 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
-          />
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Phone Number
+            </label>
 
-          <button
-            type="submit"
-            className="group relative mt-7 w-full overflow-hidden rounded-2xl bg-white py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_24px_70px_rgba(255,255,255,0.25)] active:translate-y-0 active:scale-[0.96]"
-          >
-            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+              placeholder="09XXXXXXXXX"
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
 
-            <span className="absolute inset-0 scale-0 rounded-2xl bg-black/10 opacity-0 transition-all duration-300 group-active:scale-100 group-active:opacity-100" />
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Date
+            </label>
 
-            <span className="relative flex items-center justify-center gap-3">
-              Submit Booking
-              <span className="transition-transform duration-300 group-hover:translate-x-1 group-active:translate-x-2">
-                →
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              required
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Package
+            </label>
+
+            <select
+              name="packageType"
+              value={form.packageType}
+              onChange={(
+                e: ChangeEvent<HTMLSelectElement>
+              ) =>
+                setForm({
+                  ...form,
+                  packageType:
+                    e.target.value,
+                })
+              }
+              required
+              className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            >
+              <option value="">
+                Select Package
+              </option>
+
+              <option value="BASIC PACKAGE - ₱10">
+                BASIC PACKAGE - ₱10
+              </option>
+
+              <option value="ELITE PACKAGE - ₱20">
+                ELITE PACKAGE - ₱20
+              </option>
+
+              <option value="PREMIUM PACKAGE - ₱30">
+                PREMIUM PACKAGE - ₱30
+              </option>
+            </select>
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
+              Message
+            </label>
+
+            <textarea
+              name="message"
+              value={form.message}
+              onChange={handleChange}
+              required
+              placeholder="Tell us more about your booking..."
+              className="h-32 w-full resize-none rounded-2xl border border-white/10 bg-white/90 px-4 py-3 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+            />
+
+            <button
+              type="submit"
+              className="group relative mt-7 w-full overflow-hidden rounded-2xl bg-white py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_24px_70px_rgba(255,255,255,0.25)] active:translate-y-0 active:scale-[0.96]"
+            >
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+              <span className="relative flex items-center justify-center gap-3">
+                Submit Booking
+                <span className="transition-transform duration-300 group-hover:translate-x-1 group-active:translate-x-2">
+                  →
+                </span>
               </span>
-            </span>
-          </button>
-        </form>
+            </button>
+          </form>
+
+          {/* LIVE MAP */}
+          <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] p-4 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl">
+            <h3 className="mb-4 text-2xl font-black">
+              Find Us
+            </h3>
+
+            <div className="overflow-hidden rounded-3xl border border-white/10">
+              <iframe
+                title="Studio Location Map"
+                src="https://www.google.com/maps?q=Quezon%20City%20Philippines&output=embed"
+                className="h-[320px] w-full border-0"
+                loading="lazy"
+                allowFullScreen
+              />
+            </div>
+
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Quezon+City+Philippines"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 block rounded-2xl bg-white py-3 text-center font-black text-black transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-95"
+            >
+              Open in Google Maps
+            </a>
+          </div>
+        </div>
       </div>
 
+      {/* EMAIL MODAL */}
       {showEmailDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#141414]/95 p-6 text-white shadow-[0_30px_100px_rgba(0,0,0,0.7)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-300">
-            <h2 className="mb-2 text-2xl font-black tracking-tight">
+          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#141414]/95 p-6 text-white shadow-[0_30px_100px_rgba(0,0,0,0.7)] backdrop-blur-2xl">
+            <h2 className="mb-2 text-2xl font-black">
               Confirm Your Booking
             </h2>
 
             <p className="mb-5 text-sm leading-6 text-white/60">
-              Please enter your email address. Your booking details and
-              confirmation number will be sent to this email.
+              Please enter your email
+              address.
             </p>
 
             <input
               type="email"
               value={dialogEmail}
-              onChange={(e) => handleEmailChange(e.target.value)}
+              onChange={(e) =>
+                handleEmailChange(
+                  e.target.value
+                )
+              }
               placeholder="example@gmail.com"
-              className="h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none"
             />
 
-            {emailProvider && !emailError && (
-              <p className="mt-2 text-sm font-semibold text-green-300">
-                Detected provider: {emailProvider}
-              </p>
-            )}
+            {emailProvider &&
+              !emailError && (
+                <p className="mt-2 text-sm font-semibold text-green-300">
+                  Detected provider:{" "}
+                  {emailProvider}
+                </p>
+              )}
 
             {emailError && (
               <p className="mt-2 text-sm font-semibold text-red-300">
@@ -417,36 +596,22 @@ export default function BookingForm() {
               <button
                 type="button"
                 onClick={applySuggestion}
-                className="mt-2 text-sm font-bold text-yellow-300 underline transition hover:text-yellow-200 active:scale-95"
+                className="mt-2 text-sm font-bold text-yellow-300 underline"
               >
-                Did you mean {emailSuggestion}?
+                Did you mean{" "}
+                {emailSuggestion}?
               </button>
             )}
-
-            <div className="mt-5 space-y-2 rounded-3xl border border-white/10 bg-white/[0.06] p-4 text-sm">
-              <p>
-                <span className="text-white/50">Name:</span> {form.name}
-              </p>
-
-              <p>
-                <span className="text-white/50">Phone:</span> {form.phone}
-              </p>
-
-              <p>
-                <span className="text-white/50">Date:</span> {form.date}
-              </p>
-
-              <p>
-                <span className="text-white/50">Package:</span>{" "}
-                {form.packageType}
-              </p>
-            </div>
 
             <div className="mt-5 flex gap-3">
               <button
                 type="button"
-                onClick={() => setShowEmailDialog(false)}
-                className="w-1/2 rounded-2xl bg-white/10 py-3 font-bold text-white transition-all duration-300 hover:bg-white/20 active:scale-95"
+                onClick={() =>
+                  setShowEmailDialog(
+                    false
+                  )
+                }
+                className="w-1/2 rounded-2xl bg-white/10 py-3 font-bold transition hover:bg-white/20"
               >
                 Cancel
               </button>
@@ -455,25 +620,27 @@ export default function BookingForm() {
                 type="button"
                 onClick={confirmBooking}
                 disabled={sending}
-                className="group relative w-1/2 overflow-hidden rounded-2xl bg-white py-3 font-black text-black transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-1/2 rounded-2xl bg-white py-3 font-black text-black transition hover:scale-[1.03] active:scale-95 disabled:opacity-60"
               >
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                <span className="relative">{sending ? "SENDING..." : "CONFIRM"}</span>
+                {sending
+                  ? "SENDING..."
+                  : "CONFIRM"}
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* SUCCESS MODAL */}
       {confirmationNumber && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[32px] bg-white p-6 text-center text-black shadow-[0_30px_100px_rgba(255,255,255,0.16)] animate-in fade-in zoom-in-95 duration-300">
-            <h2 className="mb-2 text-2xl font-black tracking-tight">
+          <div className="w-full max-w-md rounded-[32px] bg-white p-6 text-center text-black shadow-[0_30px_100px_rgba(255,255,255,0.16)]">
+            <h2 className="mb-2 text-2xl font-black">
               Booking Submitted!
             </h2>
 
-            <p className="mb-4 text-sm leading-6 text-gray-600">
-              Save this confirmation number to track your booking:
+            <p className="mb-4 text-sm text-gray-600">
+              Save this confirmation number:
             </p>
 
             <div className="mb-5 rounded-2xl bg-black py-4 text-2xl font-black tracking-widest text-white">
@@ -482,14 +649,16 @@ export default function BookingForm() {
 
             <a
               href="/api"
-              className="mb-3 block w-full rounded-2xl bg-black py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95"
+              className="mb-3 block w-full rounded-2xl bg-black py-3 font-bold text-white transition hover:scale-[1.02]"
             >
               Track Booking
             </a>
 
             <button
-              onClick={() => setConfirmationNumber("")}
-              className="w-full rounded-2xl bg-gray-200 py-3 font-bold transition-all duration-300 hover:bg-gray-300 active:scale-95"
+              onClick={() =>
+                setConfirmationNumber("")
+              }
+              className="w-full rounded-2xl bg-gray-200 py-3 font-bold transition hover:bg-gray-300"
             >
               Close
             </button>
