@@ -1,58 +1,200 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
-export async function POST(req: Request) {
+type Receipt = {
+  packageName: string;
+  packagePrice: number;
+  subtotal: number;
+  total: number;
+  paidStatus: "cash_on_site" | "pending_online_payment";
+};
+
+type BookingRequest = {
+  name: string;
+  email: string;
+  emailProvider?: string;
+  phone: string;
+  date: string;
+  packageType: string;
+  message?: string;
+  confirmationNumber: string;
+  paymentMethod?: string;
+  receipt?: Receipt;
+};
+
+export async function POST(
+  req: Request
+) {
   try {
-    const booking = await req.json();
+    const booking: BookingRequest =
+      await req.json();
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: Number(process.env.EMAIL_PORT || 587),
-      secure: process.env.EMAIL_SECURE === "true",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    if (
+      !booking.email ||
+      !booking.name ||
+      !booking.confirmationNumber
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Missing required booking fields.",
+        },
+        { status: 400 }
+      );
+    }
 
-    const receiptHtml = `
-      <div style="background:#1a1a1a;padding:20px;border-radius:14px;margin-top:20px;">
-        <h2 style="margin-top:0;color:#ffffff;">Receipt Summary</h2>
+    if (
+      !process.env.EMAIL_HOST ||
+      !process.env.EMAIL_PORT ||
+      !process.env.EMAIL_USER ||
+      !process.env.EMAIL_PASS
+    ) {
+      console.error(
+        "Missing email environment variables."
+      );
 
-        <table style="width:100%;border-collapse:collapse;color:#ddd;">
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Email server configuration error.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const transporter =
+      nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(
+          process.env.EMAIL_PORT
+        ),
+        secure:
+          process.env.EMAIL_SECURE ===
+          "true",
+
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+    const receiptHtml = booking.receipt
+      ? `
+      <div
+        style="
+          background:#1a1a1a;
+          padding:20px;
+          border-radius:14px;
+          margin-top:20px;
+        "
+      >
+        <h2
+          style="
+            margin-top:0;
+            color:#ffffff;
+          "
+        >
+          Receipt Summary
+        </h2>
+
+        <table
+          style="
+            width:100%;
+            border-collapse:collapse;
+            color:#ddd;
+          "
+        >
           <tr>
-            <td style="padding:8px 0;">Package</td>
-            <td style="padding:8px 0;text-align:right;">
-              ${booking.receipt.packageName}
+            <td style="padding:8px 0;">
+              Package
             </td>
-          </tr>
 
-          <tr>
-            <td style="padding:8px 0;">Package Price</td>
-            <td style="padding:8px 0;text-align:right;">
-              ₱${booking.receipt.packagePrice}
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:8px 0;">Subtotal</td>
-            <td style="padding:8px 0;text-align:right;">
-              ₱${booking.receipt.subtotal}
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:8px 0;">Payment Method</td>
-            <td style="padding:8px 0;text-align:right;">
-              ${booking.paymentMethod}
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:8px 0;">Payment Status</td>
-            <td style="padding:8px 0;text-align:right;color:#00ff99;font-weight:bold;">
+            <td
+              style="
+                padding:8px 0;
+                text-align:right;
+              "
+            >
               ${
-                booking.receipt.paidStatus === "cash_on_site"
+                booking.receipt
+                  .packageName
+              }
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 0;">
+              Package Price
+            </td>
+
+            <td
+              style="
+                padding:8px 0;
+                text-align:right;
+              "
+            >
+              ₱${
+                booking.receipt
+                  .packagePrice
+              }
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 0;">
+              Subtotal
+            </td>
+
+            <td
+              style="
+                padding:8px 0;
+                text-align:right;
+              "
+            >
+              ₱${
+                booking.receipt
+                  .subtotal
+              }
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 0;">
+              Payment Method
+            </td>
+
+            <td
+              style="
+                padding:8px 0;
+                text-align:right;
+              "
+            >
+              ${
+                booking.paymentMethod ||
+                "N/A"
+              }
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 0;">
+              Payment Status
+            </td>
+
+            <td
+              style="
+                padding:8px 0;
+                text-align:right;
+                color:#00ff99;
+                font-weight:bold;
+              "
+            >
+              ${
+                booking.receipt
+                  .paidStatus ===
+                "cash_on_site"
                   ? "PAY ON EVENT DATE"
                   : "PENDING ONLINE PAYMENT"
               }
@@ -62,30 +204,49 @@ export async function POST(req: Request) {
           <tr>
             <td
               colspan="2"
-              style="border-top:1px solid #444;padding-top:14px;"
+              style="
+                border-top:1px solid #444;
+                padding-top:14px;
+              "
             ></td>
           </tr>
 
           <tr>
             <td
-              style="padding-top:12px;font-size:18px;font-weight:bold;color:#fff;"
+              style="
+                padding-top:12px;
+                font-size:18px;
+                font-weight:bold;
+                color:#fff;
+              "
             >
               TOTAL
             </td>
 
             <td
-              style="padding-top:12px;text-align:right;font-size:20px;font-weight:bold;color:#fff;"
+              style="
+                padding-top:12px;
+                text-align:right;
+                font-size:20px;
+                font-weight:bold;
+                color:#fff;
+              "
             >
-              ₱${booking.receipt.total}
+              ₱${
+                booking.receipt.total
+              }
             </td>
           </tr>
         </table>
       </div>
-    `;
+    `
+      : "";
 
     await transporter.sendMail({
       from: `"Booking Confirmation" <${process.env.EMAIL_USER}>`,
+
       to: booking.email,
+
       subject: `Booking Confirmation - ${booking.confirmationNumber}`,
 
       html: `
@@ -104,29 +265,56 @@ export async function POST(req: Request) {
 
           <div
             style="
-              background:linear-gradient(135deg,#000000,#2a2a2a);
+              background:linear-gradient(
+                135deg,
+                #000000,
+                #2a2a2a
+              );
               padding:40px 24px;
               text-align:center;
             "
           >
-            <h1 style="margin:0;font-size:32px;letter-spacing:1px;">
+            <h1
+              style="
+                margin:0;
+                font-size:32px;
+                letter-spacing:1px;
+              "
+            >
               BOOKING CONFIRMATION
             </h1>
 
-            <p style="margin-top:10px;color:#bdbdbd;font-size:15px;">
-              Your booking request has been successfully received.
+            <p
+              style="
+                margin-top:10px;
+                color:#bdbdbd;
+                font-size:15px;
+              "
+            >
+              Your booking request has
+              been successfully received.
             </p>
           </div>
 
           <div style="padding:28px;">
 
             <p style="font-size:16px;">
-              Hello <strong>${booking.name}</strong>,
+              Hello
+              <strong>
+                ${booking.name}
+              </strong>,
             </p>
 
-            <p style="color:#d5d5d5;line-height:1.7;">
-              Thank you for choosing our service.
-              Your booking is currently under review and waiting for approval.
+            <p
+              style="
+                color:#d5d5d5;
+                line-height:1.7;
+              "
+            >
+              Thank you for choosing our
+              service. Your booking is
+              currently under review and
+              waiting for approval.
             </p>
 
             <div
@@ -158,7 +346,9 @@ export async function POST(req: Request) {
                   color:#ffffff;
                 "
               >
-                ${booking.confirmationNumber}
+                ${
+                  booking.confirmationNumber
+                }
               </h1>
             </div>
 
@@ -170,7 +360,12 @@ export async function POST(req: Request) {
                 border:1px solid #2f2f2f;
               "
             >
-              <h2 style="margin-top:0;color:#fff;">
+              <h2
+                style="
+                  margin-top:0;
+                  color:#fff;
+                "
+              >
                 Booking Details
               </h2>
 
@@ -183,7 +378,12 @@ export async function POST(req: Request) {
               >
 
                 <tr>
-                  <td style="padding:8px 0;width:40%;">
+                  <td
+                    style="
+                      padding:8px 0;
+                      width:40%;
+                    "
+                  >
                     Full Name
                   </td>
 
@@ -208,7 +408,10 @@ export async function POST(req: Request) {
                   </td>
 
                   <td style="padding:8px 0;">
-                    ${booking.emailProvider}
+                    ${
+                      booking.emailProvider ||
+                      "Unknown"
+                    }
                   </td>
                 </tr>
 
@@ -238,7 +441,9 @@ export async function POST(req: Request) {
                   </td>
 
                   <td style="padding:8px 0;">
-                    ${booking.packageType}
+                    ${
+                      booking.packageType
+                    }
                   </td>
                 </tr>
 
@@ -275,7 +480,9 @@ export async function POST(req: Request) {
                     border:1px solid #2f2f2f;
                   "
                 >
-                  <h3 style="margin-top:0;">Customer Message</h3>
+                  <h3 style="margin-top:0;">
+                    Customer Message
+                  </h3>
 
                   <p
                     style="
@@ -307,7 +514,9 @@ export async function POST(req: Request) {
                   line-height:1.6;
                 "
               >
-                Please save your confirmation number for booking tracking and
+                Please save your
+                confirmation number for
+                booking tracking and
                 future support inquiries.
               </p>
             </div>
@@ -329,7 +538,8 @@ export async function POST(req: Request) {
                 font-size:13px;
               "
             >
-              This is an automated booking confirmation email.
+              This is an automated
+              booking confirmation email.
             </p>
           </div>
 
@@ -339,15 +549,20 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      confirmationNumber: booking.confirmationNumber,
+      confirmationNumber:
+        booking.confirmationNumber,
     });
-  } catch (error) {
-    console.log(error);
+  } catch (error: unknown) {
+    console.error(
+      "Send email error:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to send confirmation email.",
+        message:
+          "Failed to send confirmation email.",
       },
       { status: 500 }
     );
