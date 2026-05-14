@@ -82,7 +82,7 @@ export default function BookingForm() {
     }).catch(() => console.log("Email API not connected."));
 
     if (paymentMethod === "GCash" || paymentMethod === "Other Payment") {
-      const res = await fetch("/api/create-paymongo-checkout", {
+      const res = await fetch("/api", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(booking),
