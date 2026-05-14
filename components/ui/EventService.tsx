@@ -21,10 +21,10 @@ const EventService = ({ name , event } : IEventService) => {
     
     return (
         <div
-            className={` group flex justify-center items-center w-1/3 h-[500px] ${bgClass} bg-no-repeat bg-cover bg-center rounded`}
+            className={`group flex justify-center items-center w-full h-[500px] ${bgClass} bg-no-repeat bg-cover bg-center rounded `}
         >
             <h3 
-                className="relative z-10 text-4xl text-white font-bold text-center px-4 opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
+                className="relative z-10 text-lg lg:text-4xl text-white font-bold text-center px-4 lg:opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
             >
                 {event}
             </h3>

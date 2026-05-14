@@ -1,28 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import Script from "next/script";
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import { useState } from "react";
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        id?: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-            auto_select: boolean;
-          }) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
-
-type PendingSubmission = {
+type FormState = {
   name: string;
   phone: string;
   date: string;
@@ -30,302 +10,439 @@ type PendingSubmission = {
   message: string;
 };
 
-type ContactSubmission = PendingSubmission & {
-  email: string;
-  timestamp: string;
-  id: string;
-};
+type BookingStatus =
+  | "pending"
+  | "approved"
+  | "in_process"
+  | "for_pick_up"
+  | "completed";
 
-function saveContactSubmission(submission: ContactSubmission) {
-  if (typeof window === "undefined") return;
+type EmailProvider =
+  | "Gmail"
+  | "Yahoo"
+  | "Outlook"
+  | "Hotmail"
+  | "iCloud"
+  | "ProtonMail"
+  | "AOL"
+  | "Other Email Provider";
 
-  const existing = JSON.parse(localStorage.getItem("contactSubmissions") || "[]") as ContactSubmission[];
-  const next = [submission, ...existing];
-  localStorage.setItem("contactSubmissions", JSON.stringify(next));
-}
+export default function BookingForm() {
+  const [form, setForm] = useState<FormState>({
+    name: "",
+    phone: "",
+    date: "",
+    packageType: "",
+    message: "",
+  });
 
-function decodeJwt(token: string) {
-  try {
-    const payload = token.split(".")[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const json = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
-        .join("")
-    );
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [dialogEmail, setDialogEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
+  const [emailSuggestion, setEmailSuggestion] = useState("");
+  const [confirmationNumber, setConfirmationNumber] = useState("");
 
-export default function ContactUsPage() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [date, setDate] = useState("");
-  const [packageType, setPackageType] = useState("");
-  const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const [pendingSubmission, setPendingSubmission] = useState<PendingSubmission | null>(null);
-  const [googleReady, setGoogleReady] = useState(false);
+  const typoMap: Record<string, string> = {
+    "gmai.com": "gmail.com",
+    "gmial.com": "gmail.com",
+    "gmal.com": "gmail.com",
+    "gmail.con": "gmail.com",
+    "gmail.co": "gmail.com",
+    "gnail.com": "gmail.com",
+    "gmaill.com": "gmail.com",
+    "gmail.cm": "gmail.com",
+    "yaho.com": "yahoo.com",
+    "yahho.com": "yahoo.com",
+    "yahoo.con": "yahoo.com",
+    "yahoo.co": "yahoo.com",
+    "yaoo.com": "yahoo.com",
+    "outlok.com": "outlook.com",
+    "outloo.com": "outlook.com",
+    "outlook.con": "outlook.com",
+    "outlook.co": "outlook.com",
+    "hotmial.com": "hotmail.com",
+    "hotmai.com": "hotmail.com",
+    "hotmail.con": "hotmail.com",
+    "hotmail.co": "hotmail.com",
+    "icloud.con": "icloud.com",
+    "iclod.com": "icloud.com",
+    "icoud.com": "icloud.com",
+    "protonmail.con": "protonmail.com",
+    "aol.con": "aol.com",
+  };
 
-  useEffect(() => {
-    document.body.classList.add("contact-page");
-    return () => {
-      document.body.classList.remove("contact-page");
-    };
-  }, []);
+  const generateConfirmationNumber = () => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(100000 + Math.random() * 900000);
+    return `BK-${year}-${random}`;
+  };
 
-  const handleCredentialResponse = async (response: { credential: string }) => {
-    const payload = decodeJwt(response.credential);
-    if (!payload?.email) {
-      setFeedback("Unable to determine the signed-in Google account email.");
-      return;
-    }
+  const detectProvider = (email: string): EmailProvider | "" => {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain) return "";
 
-    if (!pendingSubmission) {
-      setFeedback("No pending submission found. Please try again.");
-      return;
-    }
+    if (domain === "gmail.com") return "Gmail";
+    if (domain === "yahoo.com") return "Yahoo";
+    if (domain === "outlook.com") return "Outlook";
+    if (domain === "hotmail.com") return "Hotmail";
+    if (domain === "icloud.com") return "iCloud";
+    if (domain === "protonmail.com") return "ProtonMail";
+    if (domain === "aol.com") return "AOL";
 
-    const body = {
-      ...pendingSubmission,
-      email: payload.email,
-    };
+    return "Other Email Provider";
+  };
 
-    try {
-      const res = await fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+  const validateEmail = (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Unable to send confirmation email.");
-      }
-
-      const submission: ContactSubmission = {
-        ...pendingSubmission,
-        email: payload.email,
-        timestamp: new Date().toISOString(),
-        id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    if (!cleanEmail) {
+      return {
+        valid: false,
+        error: "Email is required.",
+        suggestion: "",
+        provider: "" as EmailProvider | "",
       };
-      saveContactSubmission(submission);
-
-      setFeedback(`Booking confirmed! Confirmation sent to ${payload.email}. Saved to admin logs.`);
-      setName("");
-      setPhone("");
-      setDate("");
-      setPackageType("");
-      setMessage("");
-      setPendingSubmission(null);
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Failed to send confirmation email.");
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return {
+        valid: false,
+        error: "Please enter a valid email address.",
+        suggestion: "",
+        provider: "" as EmailProvider | "",
+      };
+    }
+
+    const domain = cleanEmail.split("@")[1];
+    const correctedDomain = typoMap[domain];
+
+    if (correctedDomain) {
+      const suggestedEmail = cleanEmail.replace(domain, correctedDomain);
+
+      return {
+        valid: false,
+        error: "Possible email typo detected.",
+        suggestion: suggestedEmail,
+        provider: detectProvider(suggestedEmail),
+      };
+    }
+
+    return {
+      valid: true,
+      error: "",
+      suggestion: "",
+      provider: detectProvider(cleanEmail),
+    };
   };
 
-  const initializeGoogle = () => {
-    const google = window.google;
-    if (!google?.accounts?.id) {
-      console.error("Google Identity Services not loaded");
-      return;
-    }
+  const handleEmailChange = (value: string) => {
+    setDialogEmail(value);
 
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID environment variable not set");
-      return;
-    }
+    const result = validateEmail(value);
 
-    try {
-      google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleCredentialResponse,
-        auto_select: false,
-      });
-      setGoogleReady(true);
-    } catch (error) {
-      console.error("Failed to initialize Google Identity Services:", error);
-    }
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const applySuggestion = () => {
+    setDialogEmail(emailSuggestion);
+
+    const result = validateEmail(emailSuggestion);
+
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const openEmailDialog = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if all required fields are filled
-    if (!name || !phone || !date || !packageType || !message) {
-      setFeedback("Please fill in all required fields.");
-      return;
-    }
+    setDialogEmail("");
+    setEmailError("Email is required.");
+    setEmailSuggestion("");
+    setEmailProvider("");
+    setShowEmailDialog(true);
+  };
 
-    // If Google is configured and ready, use it for sign-in
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (clientId && googleReady && window.google?.accounts?.id) {
-      setPendingSubmission({ name, phone, date, packageType, message });
-      setFeedback("Opening Google sign-in... \nPlease select your account to receive confirmation.");
-      window.google.accounts.id.prompt();
-      return;
-    }
+  const confirmBooking = async () => {
+    const cleanEmail = dialogEmail.trim().toLowerCase();
+    const result = validateEmail(cleanEmail);
 
-    // If Google is not available, submit directly
+    setEmailError(result.error);
+    setEmailSuggestion(result.suggestion);
+    setEmailProvider(result.provider);
+
+    if (!result.valid) return;
+
+    setSending(true);
+
+    const generatedConfirmation = generateConfirmationNumber();
+
+    const newBooking = {
+      ...form,
+      email: cleanEmail,
+      emailProvider: result.provider,
+      confirmationNumber: generatedConfirmation,
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      status: "pending" as BookingStatus,
+    };
+
+    const existing = JSON.parse(
+      localStorage.getItem("adminBookingLogs") || "[]"
+    );
+
+    localStorage.setItem(
+      "adminBookingLogs",
+      JSON.stringify([newBooking, ...existing])
+    );
+
     try {
-      const body = {
-        name,
-        phone,
-        date,
-        packageType,
-        message,
-        email: "contact@timeless-media-studio.com" // Default email for direct submissions
-      };
-
-      const res = await fetch("/api/send-confirmation", {
+      await fetch("/api/send-confirmation", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newBooking),
       });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Unable to send message.");
-      }
-
-      const submission: ContactSubmission = {
-        name,
-        phone,
-        date,
-        packageType,
-        message,
-        email: body.email,
-        timestamp: new Date().toISOString(),
-        id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      };
-      saveContactSubmission(submission);
-
-      setFeedback("Message sent successfully! We'll get back to you soon.");
-      setName("");
-      setPhone("");
-      setDate("");
-      setPackageType("");
-      setMessage("");
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Failed to send message.");
+    } catch {
+      console.log("Email API is not connected yet.");
     }
+
+    setSending(false);
+    setShowEmailDialog(false);
+    setConfirmationNumber(generatedConfirmation);
+
+    setForm({
+      name: "",
+      phone: "",
+      date: "",
+      packageType: "",
+      message: "",
+    });
+
+    setDialogEmail("");
+    setEmailError("");
+    setEmailSuggestion("");
+    setEmailProvider("");
   };
 
   return (
-    <>
-      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
-      <div className="min-h-screen bg-black text-white py-12 px-4">
-        <div className="max-w-[1300px] mx-auto">
-          <div className="flex justify-end mb-8">
-            <Link
-              href="/"
-              className="inline-flex items-center rounded-full border border-gray-700 bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-800"
-            >
-              Go back home
-            </Link>
-          </div>
-          <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 items-center">
-            <div className="bg-transparent rounded-3xl p-10">
-              <span className="text-sm font-semibold uppercase tracking-[0.32em] text-gray-400">BOOK NOW!</span>
-              <h1 className="mt-8 text-5xl font-sans font-extrabold leading-tight text-white" style={{ fontFamily: "sans-serif" }}>
-                Make your memories documented with us.
-              </h1>
+    <section className="min-h-screen bg-black text-white flex items-center justify-center px-6 py-12 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_30%)]" />
+
+      <div className="relative w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div className="px-2 lg:px-10">
+          <p className="text-2xl font-black mb-3 tracking-wide">BOOK NOW!</p>
+
+          <h1 className="font-serif text-[#c9c9c9] text-[56px] sm:text-[78px] lg:text-[94px] leading-[0.84] tracking-[-4px] drop-shadow-lg">
+            Make your
+            <br />
+            memories
+            <br />
+            Documented
+            <br />
+            with us.
+          </h1>
+
+          <div className="h-px bg-gradient-to-r from-gray-400 to-transparent max-w-xl mt-10 mb-5" />
+
+          <p className="text-gray-400 max-w-md">
+            After booking, you will receive a confirmation number for tracking.
+          </p>
+        </div>
+
+        <form
+          onSubmit={openEmailDialog}
+          className="w-full max-w-md mx-auto bg-[#4f4f4f]/95 rounded-[30px] p-8 lg:p-9 shadow-[0_25px_100px_rgba(255,255,255,0.12)] border border-white/10 backdrop-blur"
+        >
+          <label className="block text-sm font-black mb-2">NAME</label>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            placeholder="Your full name"
+            className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+          />
+
+          <label className="block text-sm font-black mb-2">
+            PHONE NUMBER
+          </label>
+          <input
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            required
+            placeholder="09XXXXXXXXX"
+            className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+          />
+
+          <label className="block text-sm font-black mb-2">DATE</label>
+          <input
+            type="date"
+            name="date"
+            value={form.date}
+            onChange={handleChange}
+            required
+            className="w-full h-11 rounded-md bg-[#dedede] text-black px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+          />
+
+          <label className="block text-sm font-black mb-2">PACKAGE</label>
+          <input
+            name="packageType"
+            value={form.packageType}
+            onChange={handleChange}
+            required
+            placeholder="Example: Wedding, Birthday, Event"
+            className="w-full h-11 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 mb-3 outline-none focus:ring-2 focus:ring-white"
+          />
+
+          <label className="block text-sm font-black mb-2">MESSAGE</label>
+          <textarea
+            name="message"
+            value={form.message}
+            onChange={handleChange}
+            required
+            placeholder="Tell us more about your booking..."
+            className="w-full h-32 rounded-md bg-[#dedede] text-black placeholder:text-gray-600 px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-white"
+          />
+
+          <button
+            type="submit"
+            className="group relative mt-6 w-full overflow-hidden rounded-xl bg-white text-black py-3 font-black tracking-wide transition duration-300 hover:scale-[1.03] active:scale-[0.97] shadow-[0_10px_30px_rgba(255,255,255,0.18)]"
+          >
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <span className="relative flex items-center justify-center gap-2">
+              SUBMIT BOOKING
+              <span className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </span>
+          </button>
+        </form>
+      </div>
+
+      {showEmailDialog && (
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center px-4">
+          <div className="w-full max-w-md rounded-3xl bg-[#505050] border border-white/10 p-6 text-white shadow-2xl">
+            <h2 className="text-2xl font-black mb-2">
+              Confirm Your Booking
+            </h2>
+
+            <p className="text-sm text-gray-200 mb-5">
+              Please enter your email address. Your booking details and
+              confirmation number will be sent to this email.
+            </p>
+
+            <input
+              type="email"
+              value={dialogEmail}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="example@gmail.com"
+              className="w-full h-12 rounded-xl bg-[#e0e0e0] text-black placeholder:text-gray-600 px-4 outline-none focus:ring-2 focus:ring-white"
+            />
+
+            {emailProvider && !emailError && (
+              <p className="mt-2 text-sm text-green-300">
+                Detected provider: {emailProvider}
+              </p>
+            )}
+
+            {emailError && (
+              <p className="mt-2 text-sm text-red-300">{emailError}</p>
+            )}
+
+            {emailSuggestion && (
+              <button
+                type="button"
+                onClick={applySuggestion}
+                className="mt-2 text-sm text-yellow-300 underline"
+              >
+                Did you mean {emailSuggestion}?
+              </button>
+            )}
+
+            <div className="mt-5 rounded-2xl bg-black/25 p-4 text-sm space-y-1">
+              <p>
+                <span className="text-gray-300">Name:</span> {form.name}
+              </p>
+              <p>
+                <span className="text-gray-300">Phone:</span> {form.phone}
+              </p>
+              <p>
+                <span className="text-gray-300">Date:</span> {form.date}
+              </p>
+              <p>
+                <span className="text-gray-300">Package:</span>{" "}
+                {form.packageType}
+              </p>
             </div>
 
-            <div className="bg-gray-900 border border-gray-700 rounded-[32px] p-8 shadow-2xl">
-              <h2 className="text-3xl font-bold text-white mb-6">Contact Form</h2>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
-                    required
-                  />
-                </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                type="button"
+                onClick={() => setShowEmailDialog(false)}
+                className="w-1/2 rounded-xl bg-gray-700 py-3 font-bold hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
 
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">Phone number</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter your phone number"
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-2">Date</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-gray-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-2">Package</label>
-                    <select
-                      value={packageType}
-                      onChange={(e) => setPackageType(e.target.value)}
-                      className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white focus:border-gray-500 focus:outline-none"
-                      required
-                    >
-                      <option value="" className="bg-gray-800 text-white">Select a package</option>
-                      <option value="basic" className="bg-gray-800 text-white">Basic</option>
-                      <option value="standard" className="bg-gray-800 text-white">Standard</option>
-                      <option value="premium" className="bg-gray-800 text-white">Premium</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-2">Message</label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Write your message"
-                    rows={5}
-                    className="w-full rounded-2xl border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-gray-500 focus:outline-none resize-none"
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full rounded-2xl bg-gray-600 py-4 text-lg font-semibold text-white transition duration-200 hover:bg-gray-500 active:scale-95"
-                >
-                  Submit
-                </button>
-              </form>
-              {feedback ? <p className="mt-4 whitespace-pre-line text-sm text-green-300">{feedback}</p> : null}
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-white mb-5">Live Maps</h2>
-            <div className="overflow-hidden rounded-[32px] border border-gray-700 shadow-2xl">
-              <iframe
-                title="Live Location Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.086988477722!2d-122.41941518468164!3d37.774929679759906!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085818f0ebb8c4f%3A0x44c8f74ee4a5e0ae!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1700000000000"
-                className="h-[260px] w-full border-0 bg-gray-900"
-                allowFullScreen
-                loading="lazy"
-              />
+              <button
+                type="button"
+                onClick={confirmBooking}
+                disabled={sending}
+                className="w-1/2 rounded-xl bg-white text-black py-3 font-black hover:scale-[1.03] active:scale-[0.97] transition disabled:opacity-60"
+              >
+                {sending ? "SENDING..." : "CONFIRM"}
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </>
+      )}
+
+      {confirmationNumber && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4">
+          <div className="w-full max-w-md bg-white text-black rounded-3xl p-6 text-center shadow-2xl">
+            <h2 className="text-2xl font-black mb-2">
+              Booking Submitted!
+            </h2>
+
+            <p className="text-gray-600 mb-4">
+              Save this confirmation number to track your booking:
+            </p>
+
+            <div className="bg-black text-white rounded-xl py-4 text-2xl font-black tracking-widest mb-5">
+              {confirmationNumber}
+            </div>
+
+            <a
+              href="/api"
+              className="block w-full bg-black text-white py-3 rounded-xl font-bold mb-3 hover:scale-[1.02] transition"
+            >
+              Track Booking
+            </a>
+
+            <button
+              onClick={() => setConfirmationNumber("")}
+              className="w-full bg-gray-200 py-3 rounded-xl font-bold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
