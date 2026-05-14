@@ -404,19 +404,6 @@ export async function POST(
 
                 <tr>
                   <td style="padding:8px 0;">
-                    Email Provider
-                  </td>
-
-                  <td style="padding:8px 0;">
-                    ${
-                      booking.emailProvider ||
-                      "Unknown"
-                    }
-                  </td>
-                </tr>
-
-                <tr>
-                  <td style="padding:8px 0;">
                     Phone Number
                   </td>
 
@@ -481,7 +468,7 @@ export async function POST(
                   "
                 >
                   <h3 style="margin-top:0;">
-                    Customer Message
+                    Client Request
                   </h3>
 
                   <p
