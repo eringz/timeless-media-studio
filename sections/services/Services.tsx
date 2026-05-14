@@ -59,10 +59,6 @@ const Services = () => {
                 event={selectedService.event}
               />
             </div>
-
-            <h2 className="mt-6 text-center text-2xl sm:text-5xl font-extrabold text-black bg-white/90 backdrop-blur px-6 py-4 rounded-2xl shadow-xl">
-              {selectedService.event}
-            </h2>
           </div>
         </div>
       )}
