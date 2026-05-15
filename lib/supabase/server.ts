@@ -24,7 +24,7 @@ export async function supabaseRequest<T>(
     ...init,
     headers: {
       apikey: supabaseKey!,
-      Authorization: `Bearer ${supabaseKey}`,
+      Authorization: `Bearer ${supabaseKey!}`,
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
       ...(init.headers || {}),
