@@ -69,9 +69,18 @@ export default function AdminPanel() {
 
     loadData();
 
-    const interval = window.setInterval(loadData, 5000);
+    const timeout = window.setTimeout(() => {
+  void loadData();
+}, 0);
 
-    return () => window.clearInterval(interval);
+const interval = window.setInterval(() => {
+  void loadData();
+}, 5000);
+
+return () => {
+  window.clearTimeout(timeout);
+  window.clearInterval(interval);
+};
   }, [loadData, router]);
 
   const updateStatus = async (id: string, status: BookingStatus) => {
