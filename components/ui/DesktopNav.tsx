@@ -58,7 +58,7 @@ const DesktopNav = () => {
                     key={link.name}
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
-                    className="px-8 py-2 border border-white rounded text-2xl inset-0 shadow-md shadow-gray-100 text-shadow-md text-shadow-sky-300"
+                    className="px-8 py-2 border border-white rounded text-xl inset-0 shadow-md shadow-gray-100 text-shadow-md text-shadow-sky-300"
                 >
                     {link.name}
                 </Link>
