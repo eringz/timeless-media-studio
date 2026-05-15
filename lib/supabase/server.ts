@@ -23,7 +23,7 @@ export async function supabaseRequest<T>(
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
-      apikey: supabaseKey!,
+      apikey: supabaseKey,
       Authorization: `Bearer ${supabaseKey}`,
       'Content-Type': 'application/json',
       Prefer: 'return=representation',

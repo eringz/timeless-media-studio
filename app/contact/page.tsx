@@ -374,7 +374,6 @@ export default function BookingForm() {
             </label>
 
             <input
-              title="date"
               type="date"
               name="date"
               value={form.date}
@@ -388,7 +387,6 @@ export default function BookingForm() {
             </label>
 
             <select
-              title="package"
               name="packageType"
               value={form.packageType}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
