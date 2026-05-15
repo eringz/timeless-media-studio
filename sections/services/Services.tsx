@@ -116,20 +116,6 @@ const Services = () => {
         </div>
       )}
 
-      {/* Marquee */}
-      <div className="w-full overflow-hidden bg-black py-4 rounded-xl mt-10">
-        <div className="marquee flex whitespace-nowrap">
-          <span className="text-white text-lg font-semibold px-8">
-            Photography • Birthday Events • Weddings • Debuts • Concerts •
-            Family Shoot • Prenup • Travel Photography •
-          </span>
-
-          <span className="text-white text-lg font-semibold px-8">
-            Photography • Birthday Events • Weddings • Debuts • Concerts •
-            Family Shoot • Prenup • Travel Photography •
-          </span>
-        </div>
-      </div>
 
       <style jsx>{`
         .marquee {
