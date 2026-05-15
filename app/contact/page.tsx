@@ -52,7 +52,8 @@ const faqs = [
   },
   {
     question: "Can I cancel my booking?",
-    answer: "Yes. Track your booking and click Cancel Booking.",
+    answer:
+      "Yes, but only if the booking is not in process, completed, or already cancelled.",
   },
 ];
 
@@ -100,6 +101,18 @@ export default function BookingForm() {
     if (packageType.includes("ELITE")) return "₱20";
     if (packageType.includes("PREMIUM")) return "₱30";
     return "₱0";
+  };
+
+  const isCancelDisabled = (status?: BookingStatus) => {
+    return (
+      status === "in_process" ||
+      status === "completed" ||
+      status === "cancelled"
+    );
+  };
+
+  const isUpdateDisabled = (status?: BookingStatus) => {
+    return status === "completed" || status === "cancelled";
   };
 
   const detectProvider = (email: string): EmailProvider | "" => {
@@ -172,7 +185,9 @@ export default function BookingForm() {
 
   const handleEmailChange = (value: string) => {
     setDialogEmail(value);
+
     const result = validateEmail(value);
+
     setEmailError(result.error);
     setEmailProvider(result.provider);
   };
@@ -208,12 +223,14 @@ export default function BookingForm() {
         )}`
       );
 
-      if (!response.ok) {
-        setTrackerError("Booking not found. Please check your confirmation number.");
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data) {
+        setTrackerError(
+          data?.error || "Booking not found. Please check your confirmation number."
+        );
         return;
       }
-
-      const data = await response.json();
 
       const normalizedBooking: BookingLog = {
         id: data.id,
@@ -248,6 +265,11 @@ export default function BookingForm() {
   const updateBooking = async () => {
     if (!trackedBooking) return;
 
+    if (isUpdateDisabled(trackedBooking.status)) {
+      setTrackerError("This booking can no longer be updated.");
+      return;
+    }
+
     setTrackerLoading(true);
     setTrackerError("");
     setTrackerMessage("");
@@ -264,8 +286,10 @@ export default function BookingForm() {
         }),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        setTrackerError("Failed to update booking.");
+        setTrackerError(data?.error || "Failed to update booking.");
         return;
       }
 
@@ -285,6 +309,11 @@ export default function BookingForm() {
 
   const cancelBooking = async () => {
     if (!trackedBooking) return;
+
+    if (isCancelDisabled(trackedBooking.status)) {
+      setTrackerError("This booking can no longer be cancelled.");
+      return;
+    }
 
     const confirmed = window.confirm(
       "Are you sure you want to cancel this booking?"
@@ -308,8 +337,10 @@ export default function BookingForm() {
         }),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        setTrackerError("Failed to cancel booking.");
+        setTrackerError(data?.error || "Failed to cancel booking.");
         return;
       }
 
@@ -356,12 +387,12 @@ export default function BookingForm() {
         body: JSON.stringify(bookingPayload),
       });
 
-      if (!bookingResponse.ok) {
-        setEmailError("Failed to save booking.");
+      const savedBooking = await bookingResponse.json().catch(() => null);
+
+      if (!bookingResponse.ok || !savedBooking) {
+        setEmailError(savedBooking?.error || "Failed to save booking.");
         return;
       }
-
-      const savedBooking = await bookingResponse.json();
 
       await fetch("/api/send-confirmation", {
         method: "POST",
@@ -654,6 +685,7 @@ export default function BookingForm() {
             </button>
 
             <button
+              type="button"
               onClick={() => setConfirmationNumber("")}
               className="w-full rounded-2xl bg-gray-200 py-3 font-bold"
             >
@@ -670,6 +702,7 @@ export default function BookingForm() {
               <h2 className="text-2xl font-black">Booking Tracker</h2>
 
               <button
+                type="button"
                 onClick={closeTrackerModal}
                 className="rounded-full bg-white/10 px-4 py-2 font-black hover:bg-white/20"
               >
@@ -685,6 +718,7 @@ export default function BookingForm() {
             />
 
             <button
+              type="button"
               onClick={trackBooking}
               disabled={trackerLoading}
               className="w-full rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
@@ -714,12 +748,30 @@ export default function BookingForm() {
                       </h3>
 
                       <div className="space-y-2 text-sm">
-                        <p><span className="text-white/50">Confirmation:</span> {trackedBooking.confirmationNumber}</p>
-                        <p><span className="text-white/50">Name:</span> {trackedBooking.name}</p>
-                        <p><span className="text-white/50">Phone:</span> {trackedBooking.phone}</p>
-                        <p><span className="text-white/50">Date:</span> {trackedBooking.date}</p>
-                        <p><span className="text-white/50">Package:</span> {trackedBooking.packageType}</p>
-                        <p><span className="text-white/50">Message:</span> {trackedBooking.message || "No message"}</p>
+                        <p>
+                          <span className="text-white/50">Confirmation:</span>{" "}
+                          {trackedBooking.confirmationNumber}
+                        </p>
+                        <p>
+                          <span className="text-white/50">Name:</span>{" "}
+                          {trackedBooking.name}
+                        </p>
+                        <p>
+                          <span className="text-white/50">Phone:</span>{" "}
+                          {trackedBooking.phone}
+                        </p>
+                        <p>
+                          <span className="text-white/50">Date:</span>{" "}
+                          {trackedBooking.date}
+                        </p>
+                        <p>
+                          <span className="text-white/50">Package:</span>{" "}
+                          {trackedBooking.packageType}
+                        </p>
+                        <p>
+                          <span className="text-white/50">Message:</span>{" "}
+                          {trackedBooking.message || "No message"}
+                        </p>
                         <p>
                           <span className="text-white/50">Status:</span>{" "}
                           <span className="font-black uppercase">
@@ -753,19 +805,30 @@ export default function BookingForm() {
 
                     <div className="flex gap-3">
                       <button
+                        type="button"
                         onClick={() => setIsEditingBooking(true)}
-                        disabled={trackedBooking.status === "cancelled"}
-                        className="w-1/2 rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
+                        disabled={isUpdateDisabled(trackedBooking.status)}
+                        className={`w-1/2 rounded-2xl py-3 font-black transition-all duration-300 ${
+                          isUpdateDisabled(trackedBooking.status)
+                            ? "cursor-not-allowed bg-gray-500 text-white opacity-50"
+                            : "bg-white text-black hover:scale-[1.02] active:scale-95"
+                        }`}
                       >
                         Update Details
                       </button>
 
                       <button
+                        type="button"
                         onClick={cancelBooking}
                         disabled={
-                          trackerLoading || trackedBooking.status === "cancelled"
+                          trackerLoading || isCancelDisabled(trackedBooking.status)
                         }
-                        className="w-1/2 rounded-2xl bg-red-500 py-3 font-black text-white disabled:opacity-60"
+                        className={`w-1/2 rounded-2xl py-3 font-black text-white transition-all duration-300 ${
+                          trackerLoading ||
+                          isCancelDisabled(trackedBooking.status)
+                            ? "cursor-not-allowed bg-gray-500 opacity-50"
+                            : "bg-red-500 hover:bg-red-600 active:scale-95"
+                        }`}
                       >
                         Cancel Booking
                       </button>
@@ -827,6 +890,7 @@ export default function BookingForm() {
 
                     <div className="flex gap-3">
                       <button
+                        type="button"
                         onClick={updateBooking}
                         disabled={trackerLoading}
                         className="w-1/2 rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
@@ -835,6 +899,7 @@ export default function BookingForm() {
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => setIsEditingBooking(false)}
                         className="w-1/2 rounded-2xl bg-white/10 py-3 font-black text-white hover:bg-white/20"
                       >
@@ -847,6 +912,7 @@ export default function BookingForm() {
             )}
 
             <button
+              type="button"
               onClick={closeTrackerModal}
               className="mt-5 w-full rounded-2xl bg-white/10 py-3 font-bold text-white hover:bg-white/20"
             >

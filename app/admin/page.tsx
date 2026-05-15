@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BookingStatus } from '@/lib/supabase/types';
 
@@ -24,6 +24,7 @@ const statusOptions: BookingStatus[] = [
   'in_process',
   'for_pick_up',
   'completed',
+  'cancelled',
 ];
 
 export default function AdminPanel() {
@@ -34,7 +35,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const response = await fetch('/api/bookings', { cache: 'no-store' });
 
@@ -44,6 +45,7 @@ export default function AdminPanel() {
       }
 
       const data = (await response.json()) as BookingLog[];
+
       setBookingLogs(data);
       setError('');
     } catch (err) {
@@ -51,7 +53,7 @@ export default function AdminPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -65,16 +67,12 @@ export default function AdminPanel() {
       return;
     }
 
-    const fetchData = async () => {
-        await loadData();
-    };
-
-    fetchData()
+    loadData();
 
     const interval = window.setInterval(loadData, 5000);
 
     return () => window.clearInterval(interval);
-  }, [loadData]);
+  }, [loadData, router]);
 
   const updateStatus = async (id: string, status: BookingStatus) => {
     try {
@@ -95,6 +93,10 @@ export default function AdminPanel() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update booking.');
     }
+  };
+
+  const reinstateBooking = async (id: string) => {
+    await updateStatus(id, 'pending');
   };
 
   const remove = async (id: string) => {
@@ -119,11 +121,12 @@ export default function AdminPanel() {
 
     if (!q) return bookingLogs;
 
-    return bookingLogs.filter((log) =>
-      log.confirmation_number?.toLowerCase().includes(q) ||
-      log.name?.toLowerCase().includes(q) ||
-      log.phone?.toLowerCase().includes(q) ||
-      log.email?.toLowerCase().includes(q)
+    return bookingLogs.filter(
+      (log) =>
+        log.confirmation_number?.toLowerCase().includes(q) ||
+        log.name?.toLowerCase().includes(q) ||
+        log.phone?.toLowerCase().includes(q) ||
+        log.email?.toLowerCase().includes(q)
     );
   }, [bookingLogs, search]);
 
@@ -137,6 +140,7 @@ export default function AdminPanel() {
     if (status === 'in_process') return 'In Process';
     if (status === 'for_pick_up') return 'For Pick Up';
     if (status === 'completed') return 'Completed';
+    if (status === 'cancelled') return 'Cancelled';
     return 'Pending';
   };
 
@@ -145,6 +149,7 @@ export default function AdminPanel() {
     if (status === 'in_process') return 'bg-blue-600';
     if (status === 'for_pick_up') return 'bg-purple-600';
     if (status === 'completed') return 'bg-gray-600';
+    if (status === 'cancelled') return 'bg-red-600';
     return 'bg-yellow-600';
   };
 
@@ -153,38 +158,30 @@ export default function AdminPanel() {
     router.push('/admin/login');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        Loading admin panel...
-      </div>
-    );
-  }
-
   const renderLogCard = (log: BookingLog) => (
     <div
       key={log.id}
-      className="bg-gray-900 border border-gray-800 p-4 rounded-xl"
+      className="rounded-xl border border-gray-800 bg-gray-900 p-4"
     >
-      <div className="flex flex-col md:flex-row md:justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between">
         <div>
-          <p className="font-bold text-lg">{log.name}</p>
+          <p className="text-lg font-bold">{log.name}</p>
 
-          <p className="text-sm text-green-300 font-bold">
+          <p className="text-sm font-bold text-green-300">
             🔎 Confirmation: {log.confirmation_number}
           </p>
 
-          <p className="text-gray-400 text-sm">📧 {log.email}</p>
-          <p className="text-gray-400 text-sm">📞 {log.phone}</p>
-          <p className="text-gray-400 text-sm">📅 {log.booking_date}</p>
-          <p className="text-gray-400 text-sm">🧾 {log.package_type}</p>
+          <p className="text-sm text-gray-400">📧 {log.email}</p>
+          <p className="text-sm text-gray-400">📞 {log.phone}</p>
+          <p className="text-sm text-gray-400">📅 {log.booking_date}</p>
+          <p className="text-sm text-gray-400">🧾 {log.package_type}</p>
 
           {log.message && (
-            <p className="text-gray-400 text-sm">💬 {log.message}</p>
+            <p className="text-sm text-gray-400">💬 {log.message}</p>
           )}
 
           <span
-            className={`inline-block mt-3 text-xs px-3 py-1 rounded-full text-white ${statusClass(
+            className={`mt-3 inline-block rounded-full px-3 py-1 text-xs text-white ${statusClass(
               log.status
             )}`}
           >
@@ -197,20 +194,33 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mt-4">
+      <div className="mt-4 flex flex-wrap gap-2">
         {statusOptions.map((status) => (
           <button
             key={status}
+            type="button"
             onClick={() => updateStatus(log.id, status)}
-            className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 text-xs rounded transition"
+            disabled={log.status === status}
+            className="rounded bg-white/10 px-3 py-1 text-xs text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {statusLabel(status)}
           </button>
         ))}
 
+        {log.status === 'cancelled' && (
+          <button
+            type="button"
+            onClick={() => reinstateBooking(log.id)}
+            className="rounded bg-yellow-600 px-3 py-1 text-xs text-white transition hover:bg-yellow-700"
+          >
+            Reinstate Booking
+          </button>
+        )}
+
         <button
+          type="button"
           onClick={() => remove(log.id)}
-          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-xs rounded"
+          className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
         >
           Delete
         </button>
@@ -218,61 +228,79 @@ export default function AdminPanel() {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        Loading admin panel...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="border-b border-gray-800 p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-gray-800 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-gray-400 text-sm">
+          <p className="text-sm text-gray-400">
             Supabase Booking Management
           </p>
         </div>
 
         <button
+          type="button"
           onClick={logout}
-          className="bg-red-600 px-4 py-2 rounded hover:bg-red-700 transition"
+          className="rounded bg-red-600 px-4 py-2 transition hover:bg-red-700"
         >
           Logout
         </button>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-10">
+      <div className="mx-auto max-w-6xl space-y-10 p-6">
         {error && (
           <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-200">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <p className="text-gray-400 text-sm">Total Bookings</p>
+            <p className="text-sm text-gray-400">Total Bookings</p>
             <p className="text-3xl font-black">{bookingLogs.length}</p>
           </div>
+
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <p className="text-gray-400 text-sm">Pending</p>
+            <p className="text-sm text-gray-400">Pending</p>
             <p className="text-3xl font-black">
               {bookingLogs.filter((log) => log.status === 'pending').length}
             </p>
           </div>
+
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <p className="text-gray-400 text-sm">Completed</p>
+            <p className="text-sm text-gray-400">Completed</p>
             <p className="text-3xl font-black">
               {bookingLogs.filter((log) => log.status === 'completed').length}
             </p>
           </div>
+
+          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <p className="text-sm text-gray-400">Cancelled</p>
+            <p className="text-3xl font-black">
+              {bookingLogs.filter((log) => log.status === 'cancelled').length}
+            </p>
+          </div>
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search confirmation number, name, phone, or email..."
-            className="w-full h-12 rounded-xl bg-black border border-gray-700 px-4 text-white outline-none focus:border-white"
+            className="h-12 w-full rounded-xl border border-gray-700 bg-black px-4 text-white outline-none focus:border-white"
           />
         </div>
 
         <section>
-          <h2 className="text-xl font-semibold mb-4">Booking Requests</h2>
+          <h2 className="mb-4 text-xl font-semibold">Booking Requests</h2>
 
           <div className="space-y-4">
             {filteredBookingLogs.length === 0 ? (
