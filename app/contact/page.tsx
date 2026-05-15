@@ -19,7 +19,8 @@ type BookingStatus =
   | "approved"
   | "in_process"
   | "for_pick_up"
-  | "completed";
+  | "completed"
+  | "cancelled";
 
 type EmailProvider =
   | "Gmail"
@@ -40,6 +41,21 @@ type BookingLog = FormState & {
   status: BookingStatus;
 };
 
+const faqs = [
+  {
+    question: "How do I track my booking?",
+    answer: "Use your confirmation number and click Track Order.",
+  },
+  {
+    question: "Can I update my booking details?",
+    answer: "Yes. Track your booking first, then click Update Details.",
+  },
+  {
+    question: "Can I cancel my booking?",
+    answer: "Yes. Track your booking and click Cancel Booking.",
+  },
+];
+
 export default function BookingForm() {
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -50,41 +66,28 @@ export default function BookingForm() {
   });
 
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showTrackerModal, setShowTrackerModal] = useState(false);
+  const [trackerCode, setTrackerCode] = useState("");
+  const [trackerLoading, setTrackerLoading] = useState(false);
+  const [trackerError, setTrackerError] = useState("");
+  const [trackerMessage, setTrackerMessage] = useState("");
+  const [trackedBooking, setTrackedBooking] = useState<BookingLog | null>(null);
+  const [isEditingBooking, setIsEditingBooking] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const [editBooking, setEditBooking] = useState<FormState>({
+    name: "",
+    phone: "",
+    date: "",
+    packageType: "",
+    message: "",
+  });
+
   const [dialogEmail, setDialogEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [emailProvider, setEmailProvider] = useState<EmailProvider | "">("");
-  const [emailSuggestion, setEmailSuggestion] = useState("");
   const [confirmationNumber, setConfirmationNumber] = useState("");
-
-  const typoMap: Record<string, string> = {
-    "gmai.com": "gmail.com",
-    "gmial.com": "gmail.com",
-    "gmal.com": "gmail.com",
-    "gmail.con": "gmail.com",
-    "gmail.co": "gmail.com",
-    "gnail.com": "gmail.com",
-    "gmaill.com": "gmail.com",
-    "gmail.cm": "gmail.com",
-    "yaho.com": "yahoo.com",
-    "yahho.com": "yahoo.com",
-    "yahoo.con": "yahoo.com",
-    "yahoo.co": "yahoo.com",
-    "yaoo.com": "yahoo.com",
-    "outlok.com": "outlook.com",
-    "outloo.com": "outlook.com",
-    "outlook.con": "outlook.com",
-    "outlook.co": "outlook.com",
-    "hotmial.com": "hotmail.com",
-    "hotmai.com": "hotmail.com",
-    "hotmail.con": "hotmail.com",
-    "hotmail.co": "hotmail.com",
-    "icloud.con": "icloud.com",
-    "iclod.com": "icloud.com",
-    "icoud.com": "icloud.com",
-    "protonmail.con": "protonmail.com",
-    "aol.con": "aol.com",
-  };
 
   const generateConfirmationNumber = () => {
     const year = new Date().getFullYear();
@@ -92,10 +95,16 @@ export default function BookingForm() {
     return `BK-${year}-${random}`;
   };
 
+  const getPackagePrice = (packageType: string) => {
+    if (packageType.includes("BASIC")) return "₱10";
+    if (packageType.includes("ELITE")) return "₱20";
+    if (packageType.includes("PREMIUM")) return "₱30";
+    return "₱0";
+  };
+
   const detectProvider = (email: string): EmailProvider | "" => {
     const domain = email.split("@")[1]?.toLowerCase() || "";
 
-    if (!domain) return "";
     if (domain === "gmail.com") return "Gmail";
     if (domain === "yahoo.com") return "Yahoo";
     if (domain === "outlook.com") return "Outlook";
@@ -104,7 +113,7 @@ export default function BookingForm() {
     if (domain === "protonmail.com") return "ProtonMail";
     if (domain === "aol.com") return "AOL";
 
-    return "Other Email Provider";
+    return domain ? "Other Email Provider" : "";
   };
 
   const validateEmail = (email: string) => {
@@ -114,7 +123,6 @@ export default function BookingForm() {
       return {
         valid: false,
         error: "Email is required.",
-        suggestion: "",
         provider: "" as EmailProvider | "",
       };
     }
@@ -124,56 +132,20 @@ export default function BookingForm() {
     if (!emailRegex.test(cleanEmail)) {
       return {
         valid: false,
-        error: "Please enter a valid email address.",
-        suggestion: "",
+        error: "Please enter a valid email.",
         provider: "" as EmailProvider | "",
-      };
-    }
-
-    const domain = cleanEmail.split("@")[1] || "";
-    const correctedDomain = typoMap[domain];
-
-    if (correctedDomain) {
-      const suggestedEmail = cleanEmail.replace(domain, correctedDomain);
-
-      return {
-        valid: false,
-        error: "Possible email typo detected.",
-        suggestion: suggestedEmail,
-        provider: detectProvider(suggestedEmail),
       };
     }
 
     return {
       valid: true,
       error: "",
-      suggestion: "",
       provider: detectProvider(cleanEmail),
     };
   };
 
-  const handleEmailChange = (value: string) => {
-    setDialogEmail(value);
-
-    const result = validateEmail(value);
-
-    setEmailError(result.error);
-    setEmailSuggestion(result.suggestion);
-    setEmailProvider(result.provider);
-  };
-
-  const applySuggestion = () => {
-    setDialogEmail(emailSuggestion);
-
-    const result = validateEmail(emailSuggestion);
-
-    setEmailError(result.error);
-    setEmailSuggestion(result.suggestion);
-    setEmailProvider(result.provider);
-  };
-
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setForm({
       ...form,
@@ -181,14 +153,177 @@ export default function BookingForm() {
     });
   };
 
+  const handleEditChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setEditBooking({
+      ...editBooking,
+      [e.target.name]: e.target.value,
+    });
+  };
+
   const openEmailDialog = (e: FormEvent) => {
     e.preventDefault();
-
     setDialogEmail("");
     setEmailError("Email is required.");
-    setEmailSuggestion("");
     setEmailProvider("");
     setShowEmailDialog(true);
+  };
+
+  const handleEmailChange = (value: string) => {
+    setDialogEmail(value);
+    const result = validateEmail(value);
+    setEmailError(result.error);
+    setEmailProvider(result.provider);
+  };
+
+  const openTrackerModal = () => {
+    setConfirmationNumber("");
+    setShowTrackerModal(true);
+  };
+
+  const closeTrackerModal = () => {
+    setShowTrackerModal(false);
+    setTrackerCode("");
+    setTrackerError("");
+    setTrackerMessage("");
+    setTrackedBooking(null);
+    setIsEditingBooking(false);
+  };
+
+  const trackBooking = async () => {
+    if (!trackerCode.trim()) {
+      setTrackerError("Please enter your confirmation number.");
+      return;
+    }
+
+    setTrackerLoading(true);
+    setTrackerError("");
+    setTrackerMessage("");
+
+    try {
+      const response = await fetch(
+        `/api/bookings?confirmationNumber=${encodeURIComponent(
+          trackerCode.trim()
+        )}`
+      );
+
+      if (!response.ok) {
+        setTrackerError("Booking not found. Please check your confirmation number.");
+        return;
+      }
+
+      const data = await response.json();
+
+      const normalizedBooking: BookingLog = {
+        id: data.id,
+        name: data.name,
+        phone: data.phone,
+        date: data.booking_date || data.date,
+        packageType: data.package_type || data.packageType,
+        message: data.message || "",
+        email: data.email,
+        emailProvider: data.email_provider || data.emailProvider || "",
+        confirmationNumber: data.confirmation_number || data.confirmationNumber,
+        timestamp: data.created_at || data.timestamp || "",
+        status: data.status,
+      };
+
+      setTrackedBooking(normalizedBooking);
+      setEditBooking({
+        name: normalizedBooking.name,
+        phone: normalizedBooking.phone,
+        date: normalizedBooking.date,
+        packageType: normalizedBooking.packageType,
+        message: normalizedBooking.message,
+      });
+      setIsEditingBooking(false);
+    } catch {
+      setTrackerError("Failed to connect to booking tracker.");
+    } finally {
+      setTrackerLoading(false);
+    }
+  };
+
+  const updateBooking = async () => {
+    if (!trackedBooking) return;
+
+    setTrackerLoading(true);
+    setTrackerError("");
+    setTrackerMessage("");
+
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          confirmationNumber: trackedBooking.confirmationNumber,
+          ...editBooking,
+        }),
+      });
+
+      if (!response.ok) {
+        setTrackerError("Failed to update booking.");
+        return;
+      }
+
+      setTrackedBooking({
+        ...trackedBooking,
+        ...editBooking,
+      });
+
+      setTrackerMessage("Booking updated successfully.");
+      setIsEditingBooking(false);
+    } catch {
+      setTrackerError("Failed to update booking.");
+    } finally {
+      setTrackerLoading(false);
+    }
+  };
+
+  const cancelBooking = async () => {
+    if (!trackedBooking) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this booking?"
+    );
+
+    if (!confirmed) return;
+
+    setTrackerLoading(true);
+    setTrackerError("");
+    setTrackerMessage("");
+
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          confirmationNumber: trackedBooking.confirmationNumber,
+          status: "cancelled",
+        }),
+      });
+
+      if (!response.ok) {
+        setTrackerError("Failed to cancel booking.");
+        return;
+      }
+
+      setTrackedBooking({
+        ...trackedBooking,
+        status: "cancelled",
+      });
+
+      setTrackerMessage("Booking cancelled successfully.");
+    } catch {
+      setTrackerError("Failed to cancel booking.");
+    } finally {
+      setTrackerLoading(false);
+    }
   };
 
   const confirmBooking = async () => {
@@ -196,7 +331,6 @@ export default function BookingForm() {
     const result = validateEmail(cleanEmail);
 
     setEmailError(result.error);
-    setEmailSuggestion(result.suggestion);
     setEmailProvider(result.provider);
 
     if (!result.valid) return;
@@ -223,8 +357,7 @@ export default function BookingForm() {
       });
 
       if (!bookingResponse.ok) {
-        const errorData = await bookingResponse.json().catch(() => null);
-        setEmailError(errorData?.error || "Failed to save booking to Supabase.");
+        setEmailError("Failed to save booking.");
         return;
       }
 
@@ -237,38 +370,33 @@ export default function BookingForm() {
         },
         body: JSON.stringify({
           ...bookingPayload,
-          confirmationNumber: savedBooking.confirmation_number || generatedConfirmation,
+          confirmationNumber:
+            savedBooking.confirmation_number || generatedConfirmation,
         }),
       });
 
       setShowEmailDialog(false);
-      setConfirmationNumber(savedBooking.confirmation_number || generatedConfirmation);
-    } catch (error) {
-      console.error("Booking save failed.", error);
-      setEmailError("Failed to connect to booking database. Please try again.");
-      return;
+      setConfirmationNumber(
+        savedBooking.confirmation_number || generatedConfirmation
+      );
+
+      setForm({
+        name: "",
+        phone: "",
+        date: "",
+        packageType: "",
+        message: "",
+      });
+    } catch {
+      setEmailError("Failed to connect to booking database.");
     } finally {
       setSending(false);
     }
-
-    setForm({
-      name: "",
-      phone: "",
-      date: "",
-      packageType: "",
-      message: "",
-    });
-
-    setDialogEmail("");
-    setEmailError("");
-    setEmailSuggestion("");
-    setEmailProvider("");
   };
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#050505] px-5 pb-12 pt-28 font-sans text-white sm:px-8 sm:pt-32 lg:pt-36">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.1),transparent_30%)]" />
-
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5 blur-3xl" />
 
       <div className="relative mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:items-center">
@@ -293,47 +421,55 @@ export default function BookingForm() {
             After booking, you will receive a confirmation number for tracking.
           </p>
 
+          <button
+            type="button"
+            onClick={openTrackerModal}
+            className="mx-auto mt-8 rounded-2xl bg-white px-8 py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 hover:-translate-y-1 hover:scale-[1.03] active:scale-95 lg:mx-0"
+          >
+            Track Order
+          </button>
+
           <div className="mx-auto mt-10 w-full max-w-md rounded-[32px] border border-white/10 bg-white/[0.08] p-5 text-left shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl lg:mx-0 lg:max-w-none sm:p-6">
             <h3 className="mb-4 text-xl font-black sm:text-2xl">
               Frequently Asked Questions
             </h3>
 
-            <div className="space-y-4">
-              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
-                <h4 className="font-black">How do I track my booking?</h4>
-                <p className="mt-1 text-sm leading-6 text-white/60">
-                  Use your confirmation number after submitting your booking.
-                </p>
-                <a href="/api" className="mt-2 inline-block text-sm font-bold underline">
-                  Track booking
-                </a>
-              </div>
-
-              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
-                <h4 className="font-black">What packages are available?</h4>
-                <p className="mt-1 text-sm leading-6 text-white/60">
-                  Basic, Elite, and Premium packages are available.
-                </p>
-                <a
-                  href="/services"
-                  className="mt-2 inline-block text-sm font-bold underline"
+            <div className="space-y-3">
+              {faqs.map((faq, index) => (
+                <div
+                  key={faq.question}
+                  className="overflow-hidden rounded-3xl bg-white/[0.06] transition hover:bg-white/[0.1]"
                 >
-                  View services
-                </a>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                    className="flex w-full items-center justify-between gap-4 p-4 text-left"
+                  >
+                    <span className="font-black">{faq.question}</span>
+                    <span
+                      className={`text-xl transition-transform duration-300 ${
+                        openFaq === index ? "rotate-45" : ""
+                      }`}
+                    >
+                      +
+                    </span>
+                  </button>
 
-              <div className="rounded-3xl bg-white/[0.06] p-4 transition hover:bg-white/[0.1]">
-                <h4 className="font-black">Can I contact you directly?</h4>
-                <p className="mt-1 text-sm leading-6 text-white/60">
-                  Yes, you can message us for custom bookings or questions.
-                </p>
-                <a
-                  href="/contact"
-                  className="mt-2 inline-block text-sm font-bold underline"
-                >
-                  Contact us
-                </a>
-              </div>
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      openFaq === index
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="px-4 pb-4 text-sm leading-6 text-white/60">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -346,7 +482,6 @@ export default function BookingForm() {
             <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
               Name
             </label>
-
             <input
               name="name"
               value={form.name}
@@ -359,7 +494,6 @@ export default function BookingForm() {
             <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
               Phone Number
             </label>
-
             <input
               name="phone"
               value={form.phone}
@@ -372,7 +506,6 @@ export default function BookingForm() {
             <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
               Date
             </label>
-
             <input
               type="date"
               name="date"
@@ -385,16 +518,10 @@ export default function BookingForm() {
             <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
               Package
             </label>
-
             <select
               name="packageType"
               value={form.packageType}
-              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                setForm({
-                  ...form,
-                  packageType: e.target.value,
-                })
-              }
+              onChange={handleChange}
               required
               className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
             >
@@ -409,7 +536,6 @@ export default function BookingForm() {
             <label className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white/80">
               Message
             </label>
-
             <textarea
               name="message"
               value={form.message}
@@ -421,17 +547,11 @@ export default function BookingForm() {
 
             <button
               type="submit"
-              className="group relative mt-7 w-full overflow-hidden rounded-2xl bg-white py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_24px_70px_rgba(255,255,255,0.25)] active:translate-y-0 active:scale-[0.96]"
+              className="group relative mt-7 w-full overflow-hidden rounded-2xl bg-white py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.96]"
             >
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-
-              <span className="absolute inset-0 scale-0 rounded-2xl bg-black/10 opacity-0 transition-all duration-300 group-active:scale-100 group-active:opacity-100" />
-
               <span className="relative flex items-center justify-center gap-3">
                 Submit Booking
-                <span className="transition-transform duration-300 group-hover:translate-x-1 group-active:translate-x-2">
-                  →
-                </span>
+                <span>→</span>
               </span>
             </button>
           </form>
@@ -463,20 +583,15 @@ export default function BookingForm() {
 
       {showEmailDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#141414]/95 p-6 text-white shadow-[0_30px_100px_rgba(0,0,0,0.7)] backdrop-blur-2xl">
+          <div className="w-full max-w-md rounded-[32px] border border-white/10 bg-[#141414]/95 p-6 text-white shadow-[0_30px_100px_rgba(0,0,0,0.7)]">
             <h2 className="mb-2 text-2xl font-black">Confirm Your Booking</h2>
-
-            <p className="mb-5 text-sm leading-6 text-white/60">
-              Please enter your email address. Your booking details and
-              confirmation number will be sent to this email.
-            </p>
 
             <input
               type="email"
               value={dialogEmail}
               onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="example@gmail.com"
-              className="h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm text-black outline-none transition-all duration-300 placeholder:text-gray-500 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20"
+              className="mt-4 h-12 w-full rounded-2xl bg-white/90 px-4 text-sm text-black outline-none"
             />
 
             {emailProvider && !emailError && (
@@ -491,51 +606,22 @@ export default function BookingForm() {
               </p>
             )}
 
-            {emailSuggestion && (
-              <button
-                type="button"
-                onClick={applySuggestion}
-                className="mt-2 text-sm font-bold text-yellow-300 underline transition hover:text-yellow-200 active:scale-95"
-              >
-                Did you mean {emailSuggestion}?
-              </button>
-            )}
-
-            <div className="mt-5 space-y-2 rounded-3xl border border-white/10 bg-white/[0.06] p-4 text-sm">
-              <p>
-                <span className="text-white/50">Name:</span> {form.name}
-              </p>
-              <p>
-                <span className="text-white/50">Phone:</span> {form.phone}
-              </p>
-              <p>
-                <span className="text-white/50">Date:</span> {form.date}
-              </p>
-              <p>
-                <span className="text-white/50">Package:</span>{" "}
-                {form.packageType}
-              </p>
-            </div>
-
             <div className="mt-5 flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowEmailDialog(false)}
-                className="w-1/2 rounded-2xl bg-white/10 py-3 font-bold text-white transition-all duration-300 hover:bg-white/20 active:scale-95"
+                className="w-1/2 rounded-2xl bg-white/10 py-3 font-bold text-white transition hover:bg-white/20"
               >
-                Cancel
+                Close
               </button>
 
               <button
                 type="button"
                 onClick={confirmBooking}
                 disabled={sending}
-                className="group relative w-1/2 overflow-hidden rounded-2xl bg-white py-3 font-black text-black transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-1/2 rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
               >
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                <span className="relative">
-                  {sending ? "SENDING..." : "CONFIRM"}
-                </span>
+                {sending ? "SENDING..." : "CONFIRM"}
               </button>
             </div>
           </div>
@@ -544,27 +630,225 @@ export default function BookingForm() {
 
       {confirmationNumber && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[32px] bg-white p-6 text-center text-black shadow-[0_30px_100px_rgba(255,255,255,0.16)]">
+          <div className="w-full max-w-md rounded-[32px] bg-white p-6 text-center text-black">
             <h2 className="mb-2 text-2xl font-black">Booking Submitted!</h2>
 
             <p className="mb-4 text-sm leading-6 text-gray-600">
               Save this confirmation number to track your booking:
             </p>
 
-            <div className="mb-5 rounded-2xl bg-black py-4 text-xl font-black tracking-widest text-white sm:text-2xl">
+            <div className="mb-5 rounded-2xl bg-black py-4 text-xl font-black tracking-widest text-white">
               {confirmationNumber}
             </div>
 
-            <a
-              href="/api"
-              className="mb-3 block w-full rounded-2xl bg-black py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95"
+            <button
+              type="button"
+              onClick={() => {
+                setTrackerCode(confirmationNumber);
+                setConfirmationNumber("");
+                setShowTrackerModal(true);
+              }}
+              className="mb-3 w-full rounded-2xl bg-black py-3 font-bold text-white"
             >
               Track Booking
-            </a>
+            </button>
 
             <button
               onClick={() => setConfirmationNumber("")}
-              className="w-full rounded-2xl bg-gray-200 py-3 font-bold transition-all duration-300 hover:bg-gray-300 active:scale-95"
+              className="w-full rounded-2xl bg-gray-200 py-3 font-bold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showTrackerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[32px] border border-white/10 bg-[#141414] p-6 text-white shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-2xl font-black">Booking Tracker</h2>
+
+              <button
+                onClick={closeTrackerModal}
+                className="rounded-full bg-white/10 px-4 py-2 font-black hover:bg-white/20"
+              >
+                ✕
+              </button>
+            </div>
+
+            <input
+              value={trackerCode}
+              onChange={(e) => setTrackerCode(e.target.value)}
+              placeholder="BK-2026-123456"
+              className="mb-4 h-12 w-full rounded-2xl bg-white px-4 text-black"
+            />
+
+            <button
+              onClick={trackBooking}
+              disabled={trackerLoading}
+              className="w-full rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
+            >
+              {trackerLoading ? "CHECKING..." : "TRACK ORDER"}
+            </button>
+
+            {trackerError && (
+              <p className="mt-4 rounded-2xl bg-red-500/10 p-3 text-red-300">
+                {trackerError}
+              </p>
+            )}
+
+            {trackerMessage && (
+              <p className="mt-4 rounded-2xl bg-green-500/10 p-3 text-green-300">
+                {trackerMessage}
+              </p>
+            )}
+
+            {trackedBooking && (
+              <div className="mt-5 space-y-4">
+                {!isEditingBooking ? (
+                  <>
+                    <div className="rounded-3xl bg-white/[0.05] p-5">
+                      <h3 className="mb-4 text-xl font-black">
+                        Details of the Booking
+                      </h3>
+
+                      <div className="space-y-2 text-sm">
+                        <p><span className="text-white/50">Confirmation:</span> {trackedBooking.confirmationNumber}</p>
+                        <p><span className="text-white/50">Name:</span> {trackedBooking.name}</p>
+                        <p><span className="text-white/50">Phone:</span> {trackedBooking.phone}</p>
+                        <p><span className="text-white/50">Date:</span> {trackedBooking.date}</p>
+                        <p><span className="text-white/50">Package:</span> {trackedBooking.packageType}</p>
+                        <p><span className="text-white/50">Message:</span> {trackedBooking.message || "No message"}</p>
+                        <p>
+                          <span className="text-white/50">Status:</span>{" "}
+                          <span className="font-black uppercase">
+                            {trackedBooking.status}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl bg-white/[0.05] p-5">
+                      <h3 className="mb-4 text-xl font-black">
+                        Price Quotation
+                      </h3>
+
+                      <div className="rounded-2xl bg-white p-5 text-black">
+                        <p className="text-sm text-gray-500">Package</p>
+                        <p className="text-lg font-black">
+                          {trackedBooking.packageType}
+                        </p>
+
+                        <div className="my-4 h-px bg-black/10" />
+
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold">Estimated Price</span>
+                          <span className="text-2xl font-black">
+                            {getPackagePrice(trackedBooking.packageType)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setIsEditingBooking(true)}
+                        disabled={trackedBooking.status === "cancelled"}
+                        className="w-1/2 rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
+                      >
+                        Update Details
+                      </button>
+
+                      <button
+                        onClick={cancelBooking}
+                        disabled={
+                          trackerLoading || trackedBooking.status === "cancelled"
+                        }
+                        className="w-1/2 rounded-2xl bg-red-500 py-3 font-black text-white disabled:opacity-60"
+                      >
+                        Cancel Booking
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="rounded-3xl bg-white/[0.05] p-5">
+                      <h3 className="mb-4 text-xl font-black">
+                        Update Booking
+                      </h3>
+
+                      <input
+                        name="name"
+                        value={editBooking.name}
+                        onChange={handleEditChange}
+                        className="mb-3 h-12 w-full rounded-2xl bg-white px-4 text-black"
+                      />
+
+                      <input
+                        name="phone"
+                        value={editBooking.phone}
+                        onChange={handleEditChange}
+                        className="mb-3 h-12 w-full rounded-2xl bg-white px-4 text-black"
+                      />
+
+                      <input
+                        type="date"
+                        name="date"
+                        value={editBooking.date}
+                        onChange={handleEditChange}
+                        className="mb-3 h-12 w-full rounded-2xl bg-white px-4 text-black"
+                      />
+
+                      <select
+                        name="packageType"
+                        value={editBooking.packageType}
+                        onChange={handleEditChange}
+                        className="mb-3 h-12 w-full rounded-2xl bg-white px-4 text-black"
+                      >
+                        <option value="BASIC PACKAGE - ₱10">
+                          BASIC PACKAGE - ₱10
+                        </option>
+                        <option value="ELITE PACKAGE - ₱20">
+                          ELITE PACKAGE - ₱20
+                        </option>
+                        <option value="PREMIUM PACKAGE - ₱30">
+                          PREMIUM PACKAGE - ₱30
+                        </option>
+                      </select>
+
+                      <textarea
+                        name="message"
+                        value={editBooking.message}
+                        onChange={handleEditChange}
+                        className="h-28 w-full resize-none rounded-2xl bg-white p-4 text-black"
+                      />
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={updateBooking}
+                        disabled={trackerLoading}
+                        className="w-1/2 rounded-2xl bg-white py-3 font-black text-black disabled:opacity-60"
+                      >
+                        {trackerLoading ? "UPDATING..." : "Save Update"}
+                      </button>
+
+                      <button
+                        onClick={() => setIsEditingBooking(false)}
+                        className="w-1/2 rounded-2xl bg-white/10 py-3 font-black text-white hover:bg-white/20"
+                      >
+                        Back
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={closeTrackerModal}
+              className="mt-5 w-full rounded-2xl bg-white/10 py-3 font-bold text-white hover:bg-white/20"
             >
               Close
             </button>

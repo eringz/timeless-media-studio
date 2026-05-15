@@ -1,13 +1,18 @@
-import { NextResponse } from 'next/server';
-import { supabaseRequest } from '@/lib/supabase/server';
-import type { BookingPayload, BookingRow, BookingStatus } from '@/lib/supabase/types';
+import { NextResponse } from "next/server";
+import { supabaseRequest } from "@/lib/supabase/server";
+import type {
+  BookingPayload,
+  BookingRow,
+  BookingStatus,
+} from "@/lib/supabase/types";
 
 const allowedStatuses: BookingStatus[] = [
-  'pending',
-  'approved',
-  'in_process',
-  'for_pick_up',
-  'completed',
+  "pending",
+  "approved",
+  "in_process",
+  "for_pick_up",
+  "completed",
+  "cancelled",
 ];
 
 const generateConfirmationNumber = () => {
@@ -19,24 +24,34 @@ const generateConfirmationNumber = () => {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const confirmationNumber = searchParams.get('confirmationNumber');
+    const confirmationNumber = searchParams.get("confirmationNumber");
 
     const query = confirmationNumber
       ? `/bookings?confirmation_number=ilike.${encodeURIComponent(
           confirmationNumber.trim()
         )}&select=*&limit=1`
-      : '/bookings?select=*&order=created_at.desc';
+      : "/bookings?select=*&order=created_at.desc";
 
     const data = await supabaseRequest<BookingRow[]>(query);
 
     if (confirmationNumber) {
-      return NextResponse.json(data?.[0] || null);
+      if (!data?.[0]) {
+        return NextResponse.json(
+          { error: "Booking not found." },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(data[0]);
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to load bookings.' },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to load bookings.",
+      },
       { status: 500 }
     );
   }
@@ -46,17 +61,24 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as BookingPayload;
 
-    if (!body.name || !body.phone || !body.email || !body.date || !body.packageType) {
+    if (
+      !body.name ||
+      !body.phone ||
+      !body.email ||
+      !body.date ||
+      !body.packageType
+    ) {
       return NextResponse.json(
-        { error: 'Name, phone, email, date, and package are required.' },
+        { error: "Name, phone, email, date, and package are required." },
         { status: 400 }
       );
     }
 
-    const confirmationNumber = body.confirmationNumber || generateConfirmationNumber();
+    const confirmationNumber =
+      body.confirmationNumber || generateConfirmationNumber();
 
-    const rows = await supabaseRequest<BookingRow[]>('/bookings', {
-      method: 'POST',
+    const rows = await supabaseRequest<BookingRow[]>("/bookings", {
+      method: "POST",
       body: JSON.stringify({
         name: body.name,
         phone: body.phone,
@@ -66,14 +88,17 @@ export async function POST(req: Request) {
         package_type: body.packageType,
         message: body.message || null,
         confirmation_number: confirmationNumber,
-        status: body.status || 'pending',
+        status: body.status || "pending",
       }),
     });
 
     return NextResponse.json(rows[0], { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Invalid booking request.' },
+      {
+        error:
+          error instanceof Error ? error.message : "Invalid booking request.",
+      },
       { status: 400 }
     );
   }
@@ -81,30 +106,74 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const body = (await req.json()) as { id?: string; status?: BookingStatus };
+    const body = (await req.json()) as {
+      id?: string;
+      confirmationNumber?: string;
+      status?: BookingStatus;
+      name?: string;
+      phone?: string;
+      date?: string;
+      packageType?: string;
+      message?: string;
+    };
 
-    if (!body.id || !body.status || !allowedStatuses.includes(body.status)) {
+    const filter = body.id
+      ? `id=eq.${encodeURIComponent(body.id)}`
+      : body.confirmationNumber
+      ? `confirmation_number=eq.${encodeURIComponent(body.confirmationNumber)}`
+      : "";
+
+    if (!filter) {
       return NextResponse.json(
-        { error: 'Valid booking id and status are required.' },
+        { error: "Booking id or confirmation number is required." },
         { status: 400 }
       );
     }
 
+    if (body.status && !allowedStatuses.includes(body.status)) {
+      return NextResponse.json(
+        { error: "Invalid booking status." },
+        { status: 400 }
+      );
+    }
+
+    const updateData: Record<string, string | null> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (body.status) updateData.status = body.status;
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.date !== undefined) updateData.booking_date = body.date;
+    if (body.packageType !== undefined) {
+      updateData.package_type = body.packageType;
+    }
+    if (body.message !== undefined) {
+      updateData.message = body.message || null;
+    }
+
     const rows = await supabaseRequest<BookingRow[]>(
-      `/bookings?id=eq.${encodeURIComponent(body.id)}`,
+      `/bookings?${filter}&select=*`,
       {
-        method: 'PATCH',
-        body: JSON.stringify({
-          status: body.status,
-          updated_at: new Date().toISOString(),
-        }),
+        method: "PATCH",
+        body: JSON.stringify(updateData),
       }
     );
+
+    if (!rows?.[0]) {
+      return NextResponse.json(
+        { error: "Booking not found or not updated." },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json(rows[0]);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Invalid status update request.' },
+      {
+        error:
+          error instanceof Error ? error.message : "Invalid update request.",
+      },
       { status: 400 }
     );
   }
@@ -112,24 +181,43 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const body = await req.json().catch(() => null);
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
 
-    if (!id) {
-      return NextResponse.json({ error: 'Booking id is required.' }, { status: 400 });
+    const id = body?.id || searchParams.get("id");
+    const confirmationNumber =
+      body?.confirmationNumber || searchParams.get("confirmationNumber");
+
+    const filter = id
+      ? `id=eq.${encodeURIComponent(id)}`
+      : confirmationNumber
+      ? `confirmation_number=eq.${encodeURIComponent(confirmationNumber)}`
+      : "";
+
+    if (!filter) {
+      return NextResponse.json(
+        { error: "Booking id or confirmation number is required." },
+        { status: 400 }
+      );
     }
 
-    await supabaseRequest(`/bookings?id=eq.${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: {
-        Prefer: 'return=minimal',
-      },
-    });
+    const rows = await supabaseRequest<BookingRow[]>(
+      `/bookings?${filter}&select=*`,
+      {
+        method: "DELETE",
+      }
+    );
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      deleted: rows?.[0] || null,
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete booking.' },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to delete booking.",
+      },
       { status: 500 }
     );
   }
