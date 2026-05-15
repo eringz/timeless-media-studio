@@ -65,11 +65,16 @@ export default function AdminPanel() {
       return;
     }
 
-    loadData();
+    const fetchData = async () => {
+        await loadData();
+    };
+
+    fetchData()
+
     const interval = window.setInterval(loadData, 5000);
 
     return () => window.clearInterval(interval);
-  }, [router]);
+  }, [loadData]);
 
   const updateStatus = async (id: string, status: BookingStatus) => {
     try {
