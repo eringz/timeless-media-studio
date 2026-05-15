@@ -1,8 +1,12 @@
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const supabaseKey = supabaseServiceRoleKey || supabaseAnonKey;
+const supabaseKey = supabaseAnonKey!;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Missing Supabase Environment Variables");
+}
 
 if (!supabaseUrl) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable.');
