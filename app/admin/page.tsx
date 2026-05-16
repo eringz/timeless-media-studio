@@ -36,7 +36,6 @@ export default function AdminPanel() {
   const [error, setError] = useState('');
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
-  
   const loadData = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
@@ -57,7 +56,7 @@ export default function AdminPanel() {
     }
   }, []);
 
-  
+  // Hakbang 1: Ligtas na suriin ang Authentication status ng Admin
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -68,22 +67,36 @@ export default function AdminPanel() {
     if (!authenticated) {
       router.push('/admin/login');
     } else {
-      setIsAuthorized(true);
+      // Inilagay sa queue para maiwasan ang synchronous cascading render error
+      Promise.resolve().then(() => {
+        setIsAuthorized(true);
+      });
     }
   }, [router]);
 
-  
+  // Hakbang 2: Ligtas na pagkuha ng data at polling kapag verified na ang user
   useEffect(() => {
     if (!isAuthorized) return;
 
-    
-    void loadData(false);
+    let isMounted = true;
+
+    // Ginawang async wrapper para hindi maging synchronous ang execution sa loob ng effect body
+    const initFetch = async () => {
+      if (isMounted) {
+        await loadData(false);
+      }
+    };
+
+    void initFetch();
 
     const interval = window.setInterval(() => {
-      void loadData(true); 
+      if (isMounted) {
+        void loadData(true);
+      }
     }, 5000);
 
     return () => {
+      isMounted = false;
       window.clearInterval(interval);
     };
   }, [loadData, isAuthorized]);
@@ -103,7 +116,7 @@ export default function AdminPanel() {
         throw new Error(errorData?.error || 'Failed to update booking status.');
       }
 
-      await loadData(true); 
+      await loadData(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update booking.');
     }
@@ -206,7 +219,6 @@ export default function AdminPanel() {
 
         {log.status === 'cancelled' && (
           <button
-            key="reinstate-btn"
             type="button"
             onClick={() => reinstateBooking(log.id)}
             className="rounded bg-yellow-600 px-3 py-1 text-xs text-white transition hover:bg-yellow-700"
@@ -226,7 +238,6 @@ export default function AdminPanel() {
     </div>
   );
 
-  
   if (isAuthorized === null || (loading && bookingLogs.length === 0)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black text-white">
