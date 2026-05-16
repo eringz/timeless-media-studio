@@ -12,7 +12,7 @@ export default function AdminLogin() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username === 'admin' && password === 'admin') {
+    if (username === 'admin' && password === 'admin123') {
       document.cookie = 'adminAuthenticated=true; path=/; max-age=86400; SameSite=Lax';
       router.push('/admin');
       return;
