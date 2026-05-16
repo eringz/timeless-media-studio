@@ -538,6 +538,7 @@ export default function BookingForm() {
               Date
             </label>
             <input
+              title="date"
               type="date"
               name="date"
               value={form.date}
@@ -550,6 +551,7 @@ export default function BookingForm() {
               Package
             </label>
             <select
+              title="package"
               name="packageType"
               value={form.packageType}
               onChange={handleChange}
@@ -842,6 +844,7 @@ export default function BookingForm() {
                       </h3>
 
                       <input
+                        title="name"
                         name="name"
                         value={editBooking.name}
                         onChange={handleEditChange}
@@ -849,6 +852,7 @@ export default function BookingForm() {
                       />
 
                       <input
+                        title="phone"
                         name="phone"
                         value={editBooking.phone}
                         onChange={handleEditChange}
@@ -856,6 +860,7 @@ export default function BookingForm() {
                       />
 
                       <input
+                        title="date"
                         type="date"
                         name="date"
                         value={editBooking.date}
@@ -864,6 +869,7 @@ export default function BookingForm() {
                       />
 
                       <select
+                        title="package"
                         name="packageType"
                         value={editBooking.packageType}
                         onChange={handleEditChange}
@@ -881,6 +887,7 @@ export default function BookingForm() {
                       </select>
 
                       <textarea
+                        title="message"
                         name="message"
                         value={editBooking.message}
                         onChange={handleEditChange}
