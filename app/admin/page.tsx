@@ -67,7 +67,11 @@ export default function AdminPanel() {
       return;
     }
 
-    void loadData()
+    const runInitialLoad = async () => {
+      await loadData();
+    };
+
+    void runInitialLoad();
 
     const interval = window.setInterval(() => {
       void loadData();

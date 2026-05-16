@@ -67,7 +67,11 @@ export default function AdminPanel() {
       return;
     }
 
-    loadData();
+    const initializeFetch = async () => {
+      await loadData();
+    };
+
+    void initializeFetch();
     
     const timeout = window.setTimeout(() => {
       void loadData();
