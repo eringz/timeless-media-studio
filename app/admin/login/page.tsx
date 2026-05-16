@@ -1,73 +1,325 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { BookingStatus } from '@/lib/supabase/types';
 
-export default function AdminLogin() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+type BookingLog = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  email_provider?: string | null;
+  booking_date: string;
+  package_type: string;
+  message?: string | null;
+  confirmation_number: string;
+  status: BookingStatus;
+  created_at: string;
+  updated_at?: string | null;
+};
+
+const statusOptions: BookingStatus[] = [
+  'approved',
+  'in_process',
+  'for_pick_up',
+  'completed',
+  'cancelled',
+];
+
+export default function AdminPanel() {
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [bookingLogs, setBookingLogs] = useState<BookingLog[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-    if (username === 'admin' && password === 'admin123') {
-      document.cookie = 'adminAuthenticated=true; path=/; max-age=86400; SameSite=Lax';
-      router.push('/admin');
+  const loadData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/bookings', { cache: 'no-store' });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to load bookings.');
+      }
+
+      const data = (await response.json()) as BookingLog[];
+
+      setBookingLogs(data);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load bookings.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const isAuthenticated = document.cookie
+      .split('; ')
+      .some((cookie) => cookie === 'adminAuthenticated=true');
+
+    if (!isAuthenticated) {
+      router.push('/admin/login');
       return;
     }
 
-    setError('Invalid credentials');
+    loadData();
+    
+    const timeout = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    const interval = window.setInterval(() => {
+      void loadData();
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+    };
+
+  }, [loadData, router]);
+
+  const updateStatus = async (id: string, status: BookingStatus) => {
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to update booking status.');
+      }
+
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update booking.');
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-5 pt-28 text-white">
-      <div className="bg-white/10 border border-white/10 p-8 rounded-3xl shadow-2xl w-full max-w-md backdrop-blur-xl">
-        <h1 className="text-3xl font-black text-center mb-6">Admin Login</h1>
+  const reinstateBooking = async (id: string) => {
+    await updateStatus(id, 'pending');
+  };
 
+  const remove = async (id: string) => {
+    try {
+      const response = await fetch(`/api/bookings?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to delete booking.');
+      }
+
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete booking.');
+    }
+  };
+
+  const filteredBookingLogs = useMemo(() => {
+    const q = search.toLowerCase().trim();
+
+    if (!q) return bookingLogs;
+
+    return bookingLogs.filter(
+      (log) =>
+        log.confirmation_number?.toLowerCase().includes(q) ||
+        log.name?.toLowerCase().includes(q) ||
+        log.phone?.toLowerCase().includes(q) ||
+        log.email?.toLowerCase().includes(q)
+    );
+  }, [bookingLogs, search]);
+
+  const formatDate = (d: string) => {
+    if (!d) return 'No date';
+    return new Date(d).toLocaleString();
+  };
+
+  const statusLabel = (status?: BookingStatus) => {
+    if (status === 'approved') return 'Approved';
+    if (status === 'in_process') return 'In Process';
+    if (status === 'for_pick_up') return 'For Pick Up';
+    if (status === 'completed') return 'Completed';
+    if (status === 'cancelled') return 'Cancelled';
+    return 'Pending';
+  };
+
+  const statusClass = (status?: BookingStatus) => {
+    if (status === 'approved') return 'bg-green-600';
+    if (status === 'in_process') return 'bg-blue-600';
+    if (status === 'for_pick_up') return 'bg-purple-600';
+    if (status === 'completed') return 'bg-gray-600';
+    if (status === 'cancelled') return 'bg-red-600';
+    return 'bg-yellow-600';
+  };
+
+  const logout = () => {
+    document.cookie = 'adminAuthenticated=; path=/; max-age=0; SameSite=Lax';
+    router.push('/admin/login');
+  };
+
+  const renderLogCard = (log: BookingLog) => (
+    <div
+      key={log.id}
+      className="rounded-xl border border-gray-800 bg-gray-900 p-4"
+    >
+      <div className="flex flex-col gap-4 md:flex-row md:justify-between">
+        <div>
+          <p className="text-lg font-bold">{log.name}</p>
+
+          <p className="text-sm font-bold text-green-300">
+            🔎 Confirmation: {log.confirmation_number}
+          </p>
+
+          <p className="text-sm text-gray-400">📧 {log.email}</p>
+          <p className="text-sm text-gray-400">📞 {log.phone}</p>
+          <p className="text-sm text-gray-400">📅 {log.booking_date}</p>
+          <p className="text-sm text-gray-400">🧾 {log.package_type}</p>
+
+          {log.message && (
+            <p className="text-sm text-gray-400">💬 {log.message}</p>
+          )}
+
+          <span
+            className={`mt-3 inline-block rounded-full px-3 py-1 text-xs text-white ${statusClass(
+              log.status
+            )}`}
+          >
+            {statusLabel(log.status)}
+          </span>
+        </div>
+
+        <div className="text-xs text-gray-500">
+          {formatDate(log.created_at)}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {statusOptions.map((status) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => updateStatus(log.id, status)}
+            disabled={log.status === status}
+            className="rounded bg-white/10 px-3 py-1 text-xs text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {statusLabel(status)}
+          </button>
+        ))}
+
+        {log.status === 'cancelled' && (
+          <button
+            type="button"
+            onClick={() => reinstateBooking(log.id)}
+            className="rounded bg-yellow-600 px-3 py-1 text-xs text-white transition hover:bg-yellow-700"
+          >
+            Reinstate Booking
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => remove(log.id)}
+          className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        Loading admin panel...
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="flex flex-col gap-4 border-b border-gray-800 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Admin Panel</h1>
+          <p className="text-sm text-gray-400">
+            Supabase Booking Management
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="rounded bg-red-600 px-4 py-2 transition hover:bg-red-700"
+        >
+          Logout
+        </button>
+      </div>
+
+      <div className="mx-auto max-w-6xl space-y-10 p-6">
         {error && (
-          <div className="bg-red-500/20 border border-red-400 text-red-200 px-4 py-3 rounded-xl mb-4">
+          <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-200">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-sm font-bold mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="border border-white/10 rounded-xl w-full py-3 px-4 text-black outline-none focus:ring-4 focus:ring-white/20"
-              required
-            />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <p className="text-sm text-gray-400">Total Bookings</p>
+            <p className="text-3xl font-black">{bookingLogs.length}</p>
           </div>
 
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-bold mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border border-white/10 rounded-xl w-full py-3 px-4 text-black outline-none focus:ring-4 focus:ring-white/20"
-              required
-            />
+          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <p className="text-sm text-gray-400">Pending</p>
+            <p className="text-3xl font-black">
+              {bookingLogs.filter((log) => log.status === 'pending').length}
+            </p>
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-white py-3 font-black text-black transition hover:scale-[1.02] active:scale-[0.97]"
-          >
-            Sign In
-          </button>
-        </form>
+          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <p className="text-sm text-gray-400">Completed</p>
+            <p className="text-3xl font-black">
+              {bookingLogs.filter((log) => log.status === 'completed').length}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+            <p className="text-sm text-gray-400">Cancelled</p>
+            <p className="text-3xl font-black">
+              {bookingLogs.filter((log) => log.status === 'cancelled').length}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search confirmation number, name, phone, or email..."
+            className="h-12 w-full rounded-xl border border-gray-700 bg-black px-4 text-white outline-none focus:border-white"
+          />
+        </div>
+
+        <section>
+          <h2 className="mb-4 text-xl font-semibold">Booking Requests</h2>
+
+          <div className="space-y-4">
+            {filteredBookingLogs.length === 0 ? (
+              <p className="text-gray-500">No matching booking requests.</p>
+            ) : (
+              filteredBookingLogs.map((log) => renderLogCard(log))
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );
