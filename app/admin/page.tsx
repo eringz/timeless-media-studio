@@ -34,10 +34,8 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
-  const loadData = useCallback(async (isSilent = false) => {
-    if (!isSilent) setLoading(true);
+  const loadData = useCallback(async () => {
     try {
       const response = await fetch('/api/bookings', { cache: 'no-store' });
 
@@ -47,59 +45,44 @@ export default function AdminPanel() {
       }
 
       const data = (await response.json()) as BookingLog[];
+
       setBookingLogs(data);
       setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load bookings.');
     } finally {
-      if (!isSilent) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  // Hakbang 1: Ligtas na suriin ang Authentication status ng Admin
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
-    const authenticated = document.cookie
+    const isAuthenticated = document.cookie
       .split('; ')
       .some((cookie) => cookie === 'adminAuthenticated=true');
 
-    if (!authenticated) {
+    if (!isAuthenticated) {
       router.push('/admin/login');
-    } else {
-      // Inilagay sa queue para maiwasan ang synchronous cascading render error
-      Promise.resolve().then(() => {
-        setIsAuthorized(true);
-      });
+      return;
     }
-  }, [router]);
 
-  // Hakbang 2: Ligtas na pagkuha ng data at polling kapag verified na ang user
-  useEffect(() => {
-    if (!isAuthorized) return;
-
-    let isMounted = true;
-
-    // Ginawang async wrapper para hindi maging synchronous ang execution sa loob ng effect body
-    const initFetch = async () => {
-      if (isMounted) {
-        await loadData(false);
-      }
-    };
-
-    void initFetch();
+    loadData();
+    
+    const timeout = window.setTimeout(() => {
+      void loadData();
+    }, 0);
 
     const interval = window.setInterval(() => {
-      if (isMounted) {
-        void loadData(true);
-      }
+      void loadData();
     }, 5000);
 
     return () => {
-      isMounted = false;
+      window.clearTimeout(timeout);
       window.clearInterval(interval);
     };
-  }, [loadData, isAuthorized]);
+
+  }, [loadData, router]);
 
   const updateStatus = async (id: string, status: BookingStatus) => {
     try {
@@ -116,7 +99,7 @@ export default function AdminPanel() {
         throw new Error(errorData?.error || 'Failed to update booking status.');
       }
 
-      await loadData(true);
+      await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update booking.');
     }
@@ -137,7 +120,7 @@ export default function AdminPanel() {
         throw new Error(errorData?.error || 'Failed to delete booking.');
       }
 
-      await loadData(true);
+      await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete booking.');
     }
@@ -145,6 +128,7 @@ export default function AdminPanel() {
 
   const filteredBookingLogs = useMemo(() => {
     const q = search.toLowerCase().trim();
+
     if (!q) return bookingLogs;
 
     return bookingLogs.filter(
@@ -185,23 +169,39 @@ export default function AdminPanel() {
   };
 
   const renderLogCard = (log: BookingLog) => (
-    <div key={log.id} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+    <div
+      key={log.id}
+      className="rounded-xl border border-gray-800 bg-gray-900 p-4"
+    >
       <div className="flex flex-col gap-4 md:flex-row md:justify-between">
         <div>
           <p className="text-lg font-bold">{log.name}</p>
+
           <p className="text-sm font-bold text-green-300">
             🔎 Confirmation: {log.confirmation_number}
           </p>
+
           <p className="text-sm text-gray-400">📧 {log.email}</p>
           <p className="text-sm text-gray-400">📞 {log.phone}</p>
           <p className="text-sm text-gray-400">📅 {log.booking_date}</p>
           <p className="text-sm text-gray-400">🧾 {log.package_type}</p>
-          {log.message && <p className="text-sm text-gray-400">💬 {log.message}</p>}
-          <span className={`mt-3 inline-block rounded-full px-3 py-1 text-xs text-white ${statusClass(log.status)}`}>
+
+          {log.message && (
+            <p className="text-sm text-gray-400">💬 {log.message}</p>
+          )}
+
+          <span
+            className={`mt-3 inline-block rounded-full px-3 py-1 text-xs text-white ${statusClass(
+              log.status
+            )}`}
+          >
             {statusLabel(log.status)}
           </span>
         </div>
-        <div className="text-xs text-gray-500">{formatDate(log.created_at)}</div>
+
+        <div className="text-xs text-gray-500">
+          {formatDate(log.created_at)}
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -238,7 +238,7 @@ export default function AdminPanel() {
     </div>
   );
 
-  if (isAuthorized === null || (loading && bookingLogs.length === 0)) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-black text-white">
         Loading admin panel...
@@ -251,8 +251,11 @@ export default function AdminPanel() {
       <div className="flex flex-col gap-4 border-b border-gray-800 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <p className="text-sm text-gray-400">Supabase Booking Management</p>
+          <p className="text-sm text-gray-400">
+            Supabase Booking Management
+          </p>
         </div>
+
         <button
           type="button"
           onClick={logout}
@@ -274,18 +277,21 @@ export default function AdminPanel() {
             <p className="text-sm text-gray-400">Total Bookings</p>
             <p className="text-3xl font-black">{bookingLogs.length}</p>
           </div>
+
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
             <p className="text-sm text-gray-400">Pending</p>
             <p className="text-3xl font-black">
               {bookingLogs.filter((log) => log.status === 'pending').length}
             </p>
           </div>
+
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
             <p className="text-sm text-gray-400">Completed</p>
             <p className="text-3xl font-black">
               {bookingLogs.filter((log) => log.status === 'completed').length}
             </p>
           </div>
+
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
             <p className="text-sm text-gray-400">Cancelled</p>
             <p className="text-3xl font-black">
@@ -305,6 +311,7 @@ export default function AdminPanel() {
 
         <section>
           <h2 className="mb-4 text-xl font-semibold">Booking Requests</h2>
+
           <div className="space-y-4">
             {filteredBookingLogs.length === 0 ? (
               <p className="text-gray-500">No matching booking requests.</p>
