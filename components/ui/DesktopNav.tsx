@@ -8,9 +8,9 @@ import { MdOutlineMonochromePhotos } from "react-icons/md";
 
 const navLinks = [
     { name: "Home", href: "/" },
-    { name: "About", href: "#about" },
-    { name: "Services", href: "#services" },
-    { name: "Gallery", href: "#gallery" },
+    { name: "About", href: "/#about" },
+    { name: "Services", href: "/#services" },
+    { name: "Gallery", href: "/#gallery" },
     { name: "Tracking Order", href: "/api" },
 ];
 
@@ -58,7 +58,7 @@ const DesktopNav = () => {
                     key={link.name}
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
-                    className="px-8 py-2 border border-white rounded text-xl inset-0 shadow-md shadow-gray-100 text-shadow-md text-shadow-sky-300"
+                    className="px-8 py-2 border border-white/60 rounded text-xl inset-0 shadow-sm shadow-gray-100 text-shadow-sm text-shadow-sky-300/20 hover:border-white transition-colors duration-700"
                 >
                     {link.name}
                 </Link>

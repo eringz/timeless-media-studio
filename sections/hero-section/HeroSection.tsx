@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import SharedQR from "@/sections/hero-section/SharedQR";
+
 const words = [
   'Moment', 'Memory', 'Story', 'Dream', 'Magic', 
   'Light', 'Frame', 'Essence', 'Beauty', 'Art', 
@@ -53,9 +55,9 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="hero-section w-full bg-black text-white relative min-h-screen flex items-center">
+    <div className="hero-section flex flex-col lg:flex-row justify-start lg:justify-between items-center  w-full bg-black text-white relative min-h-screen">
       
-      <div className="flex flex-col gap-8 px-6 sm:px-12 lg:px-24 w-full max-w-7xl">
+      <div className="flex flex-col gap-8 px-6 sm:px-12 mt-48 lg:mt-0 lg:px-24 lg:w-1/2">
         
         <div className="test text-6xl sm:text-7xl lg:text-9xl font-bold leading-[1.1] tracking-tight dm-serif">
           <motion.div 
@@ -86,6 +88,9 @@ const HeroSection = () => {
         >
           Book Now
         </motion.button>
+      </div>
+      <div className="hidden lg:flex justify-center itenms-center w-64 lg:w-1/2 h-64 lg:h-screen max-h-[520px]">
+          <SharedQR />
       </div>
     </div>
   );

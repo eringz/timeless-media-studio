@@ -94,7 +94,7 @@ export default function TrackerPage() {
         <h1 className="text-3xl font-black mb-2">Track Your Booking</h1>
 
         <p className="text-gray-300 mb-6">
-          Enter your confirmation number to view your live Supabase booking status.
+          Enter your confirmation number to view your live booking status.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
