@@ -4,7 +4,7 @@ export type BookingStatus =
   | "in_process"
   | "for_pick_up"
   | "completed"
-  | "cancelled";
+  | "cancelled"
   
 export type BookingRow = {
   id: string;
