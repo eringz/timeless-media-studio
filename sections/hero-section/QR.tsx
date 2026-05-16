@@ -1,3 +1,4 @@
+import React from 'react'
 import { useQRCode } from 'next-qrcode'
 
 const QR = () => {
