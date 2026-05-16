@@ -87,6 +87,9 @@ const HeroSection = () => {
           Book Now
         </motion.button>
       </div>
+      <div className="hidden lg:flex w-1/2">
+
+      </div>
     </div>
   );
 }
