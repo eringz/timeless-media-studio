@@ -133,15 +133,17 @@ If variables are missing, you'll see:
 
 ### Port Configuration Reference
 
-If Email sending fails, try different port/secure combinations:
+For Vercel production, port 465 with SSL is **strongly recommended** over 587 with STARTTLS, as Vercel's serverless environment often blocks STARTTLS connections.
 
-| EMAIL_PORT | EMAIL_SECURE | Protocol | Status |
+| EMAIL_PORT | EMAIL_SECURE | Protocol | Vercel Status |
 |-----------|--------------|----------|--------|
-| 587 | false | STARTTLS | ← Try this first |
-| 465 | true | SSL/TLS | ← Try if 587 fails |
-| 25 | false | Plain SMTP | ← Rarely works on Vercel |
+| 465 | true | SSL/TLS | ✅ **Recommended** |
+| 587 | false | STARTTLS | ⚠️ Often blocked by Vercel |
+| 25 | false | Plain SMTP | ❌ Rarely works |
 
-Most reliable for Gmail on Vercel: **Port 587 with STARTTLS**
+**For Vercel Deployment: Use port 465 with EMAIL_SECURE=true**
+
+The system will automatically upgrade port 587 to 465 when running in Vercel (detected via `VERCEL_URL` environment variable).
 
 ### Environment Variables Summary
 

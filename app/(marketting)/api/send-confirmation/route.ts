@@ -68,22 +68,32 @@ export async function POST(
       );
     }
 
+    const portNum = Number(process.env.EMAIL_PORT);
+    const isSecure = process.env.EMAIL_SECURE === "true" || portNum === 465;
+    
     console.log("📧 Email Configuration:", {
       host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: process.env.EMAIL_SECURE === "true",
+      port: portNum,
+      secure: isSecure,
       user: process.env.EMAIL_USER?.substring(0, 5) + "***",
       environment: process.env.NODE_ENV,
+      isVercel: !!process.env.VERCEL_URL,
     });
+
+    // For Vercel: prefer port 465 (SSL) over 587 (STARTTLS) as Vercel blocks STARTTLS
+    let finalPort = portNum;
+    let finalSecure = isSecure;
+    
+    if (process.env.VERCEL_URL && portNum === 587) {
+      console.log("⚠️  Vercel detected with port 587. Attempting with SSL defaults (465).");
+      finalPort = 465;
+      finalSecure = true;
+    }
 
     const transportConfig = {
       host: process.env.EMAIL_HOST,
-      port: Number(
-        process.env.EMAIL_PORT
-      ),
-      secure:
-        process.env.EMAIL_SECURE ===
-        "true" || process.env.EMAIL_PORT === "465",
+      port: finalPort,
+      secure: finalSecure,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -95,8 +105,15 @@ export async function POST(
     const transporter =
       nodemailer.createTransport(transportConfig);
 
-    // Log transporter creation
-    console.log("✓ Email transporter created");
+    // Verify SMTP connection
+    try {
+      console.log("🔍 Verifying SMTP connection...");
+      await transporter.verify();
+      console.log("✓ SMTP connection verified successfully");
+    } catch (verifyError) {
+      console.error("❌ SMTP verification failed:", verifyError instanceof Error ? verifyError.message : verifyError);
+      throw new Error(`SMTP connection failed: ${verifyError instanceof Error ? verifyError.message : "Unknown error"}`);
+    }
 
     // Determine email subject and status message based on booking status
     let emailSubject = `Booking Confirmation - ${booking.confirmationNumber}`;
