@@ -30,14 +30,18 @@ export interface BookingEmailData {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
+    // Use EMAIL_USER as sender (the authenticated Gmail account)
+    // Fallback to EMAIL_FROM if defined, otherwise use EMAIL_USER
+    const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@timelessmediastudio.com';
+    
     const result = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'noreply@timelessmediastudio.com',
+      from: fromEmail,
       to: params.to,
       subject: params.subject,
       html: params.html,
       text: params.text || params.html.replace(/<[^>]*>/g, ''),
     });
-    console.log('Email sent successfully:', result.messageId);
+    console.log(`✓ Email sent from ${fromEmail} to ${params.to} - Message ID: ${result.messageId}`);
     return true;
   } catch (error) {
     console.error('Email sending error:', error);
