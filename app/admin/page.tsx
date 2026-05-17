@@ -67,6 +67,7 @@ export default function AdminPanel() {
       return;
     }
 
+     void loadData();
     const runInitialLoad = async () => {
       await loadData();
     };
