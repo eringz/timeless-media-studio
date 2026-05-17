@@ -15,7 +15,6 @@ const navLinks = [
 ];
 
 const DesktopNav = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
 
@@ -25,7 +24,6 @@ const DesktopNav = () => {
 
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setHeaderVisible(false);
-        setMenuOpen(false)
       } else {
         setHeaderVisible(true);
       }
@@ -57,7 +55,6 @@ const DesktopNav = () => {
                 <Link
                     key={link.name}
                     href={link.href}
-                    onClick={() => setMenuOpen(false)}
                     className="px-8 py-2 border border-white rounded text-xl inset-0 shadow-md shadow-gray-100 text-shadow-md text-shadow-sky-300"
                 >
                     {link.name}

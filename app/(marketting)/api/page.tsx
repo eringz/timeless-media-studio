@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { BookingStatus } from "@/lib/supabase/types";
 
 type BookingLog = {
@@ -23,7 +23,7 @@ export default function TrackerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const findBooking = async () => {
+  const findBooking = useCallback(async () => {
     const query = confirmationNumber.trim();
 
     if (!query) {
@@ -57,17 +57,17 @@ export default function TrackerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [confirmationNumber]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (confirmationNumber.trim()) {
-        findBooking();
+        void findBooking();
       }
     }, 5000);
 
     return () => window.clearInterval(interval);
-  }, [confirmationNumber]);
+  }, [confirmationNumber, findBooking]);
 
   const getStatusLabel = (status: BookingStatus) => {
     if (status === "pending") return "Pending Approval";
