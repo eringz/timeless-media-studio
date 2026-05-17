@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
   const login = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (username === "admin" && password === "admin123") {
+    if (username === "admin" && password === "admin") {
       document.cookie =
         "adminAuthenticated=true; path=/; max-age=86400; SameSite=Lax";
 
