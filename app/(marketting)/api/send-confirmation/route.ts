@@ -51,9 +51,12 @@ export async function POST(
       !process.env.EMAIL_USER ||
       !process.env.EMAIL_PASSWORD
     ) {
-      console.error(
-        "Missing email environment variables."
-      );
+      console.error("Missing email environment variables:", {
+        EMAIL_HOST: !!process.env.EMAIL_HOST,
+        EMAIL_PORT: !!process.env.EMAIL_PORT,
+        EMAIL_USER: !!process.env.EMAIL_USER,
+        EMAIL_PASSWORD: !!process.env.EMAIL_PASSWORD,
+      });
 
       return NextResponse.json(
         {
@@ -80,6 +83,21 @@ export async function POST(
           pass: process.env.EMAIL_PASSWORD,
         },
       });
+
+    // Verify transporter connection
+    try {
+      await transporter.verify();
+      console.log("✓ Email transporter verified");
+    } catch (verifyError) {
+      console.error("✗ Email transporter verification failed:", verifyError);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Email service unavailable.",
+        },
+        { status: 500 }
+      );
+    }
 
     // Determine email subject and status message based on booking status
     let emailSubject = `Booking Confirmation - ${booking.confirmationNumber}`;
@@ -258,14 +276,17 @@ export async function POST(
     `
       : "";
 
-    await transporter.sendMail({
-      from: `"Booking Confirmation" <${process.env.EMAIL_USER}>`,
+    // Send email with proper error handling
+    let mailResult;
+    try {
+      mailResult = await transporter.sendMail({
+        from: `"Timeless Media Studio" <${process.env.EMAIL_USER}>`,
 
-      to: booking.email,
+        to: booking.email,
 
-      subject: emailSubject,
+        subject: emailSubject,
 
-      html: `
+        html: `
         <div
           style="
             max-width:700px;
@@ -342,7 +363,7 @@ export async function POST(
                 booking.status === "approved"
                   ? "Great news! Your booking has been approved by our team. We're excited to work with you!"
                   : booking.status === "cancelled"
-                  ? "Your booking has been cancelled. If you have any questions or would like to reschedule, please feel free to contact us."
+                  ? "We regret to inform you that your booking has been cancelled. We understand this may be disappointing, and we sincerely apologize for any inconvenience this may cause. If you would like to discuss this decision, reschedule for another date, or have any concerns, please don't hesitate to reach out to us directly. We value your interest and would love to work with you in the future."
                   : "Thank you for choosing our service. Your booking is currently under review and waiting for approval."
               }
             </p>
@@ -562,12 +583,18 @@ export async function POST(
 
         </div>
       `,
-    });
+      });
+      console.log(`✓ Email sent successfully to ${booking.email} (Message ID: ${mailResult.messageId})`);
+    } catch (sendError) {
+      console.error(`✗ Email send error for ${booking.email}:`, sendError);
+      throw sendError;
+    }
 
     return NextResponse.json({
       success: true,
       confirmationNumber:
         booking.confirmationNumber,
+      message: `${booking.status === "approved" ? "Approval" : booking.status === "cancelled" ? "Cancellation" : "Confirmation"} email sent successfully to ${booking.email}`,
     });
   } catch (error: unknown) {
     console.error(
@@ -580,6 +607,7 @@ export async function POST(
         success: false,
         message:
           "Failed to send confirmation email.",
+        error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }
     );
