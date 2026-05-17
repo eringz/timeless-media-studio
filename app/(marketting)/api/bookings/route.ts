@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseRequest } from "@/lib/supabase/server";
+import { sendEmail, getApprovalEmail, getCancellationEmail } from "@/lib/email";
 import type {
   BookingPayload,
   BookingRow,
@@ -137,6 +138,19 @@ export async function PATCH(req: Request) {
       );
     }
 
+    // Get current booking before updating
+    const currentBookingRows = await supabaseRequest<BookingRow[]>(
+      `/bookings?${filter}&select=*`
+    );
+
+    const currentBooking = currentBookingRows?.[0];
+    if (!currentBooking) {
+      return NextResponse.json(
+        { error: "Booking not found." },
+        { status: 404 }
+      );
+    }
+
     const updateData: Record<string, string | null> = {
       updated_at: new Date().toISOString(),
     };
@@ -167,7 +181,29 @@ export async function PATCH(req: Request) {
       );
     }
 
-    return NextResponse.json(rows[0]);
+    const updatedBooking = rows[0];
+    const statusChanged = body.status && body.status !== currentBooking.status;
+
+    // Send email if status changed to approved or cancelled
+    if (statusChanged && updatedBooking.email) {
+      if (updatedBooking.status === "approved") {
+        const emailParams = getApprovalEmail(
+          updatedBooking.name,
+          updatedBooking.confirmation_number
+        );
+        emailParams.to = updatedBooking.email;
+        void sendEmail(emailParams); // Non-blocking
+      } else if (updatedBooking.status === "cancelled") {
+        const emailParams = getCancellationEmail(
+          updatedBooking.name,
+          updatedBooking.confirmation_number
+        );
+        emailParams.to = updatedBooking.email;
+        void sendEmail(emailParams); // Non-blocking
+      }
+    }
+
+    return NextResponse.json(updatedBooking);
   } catch (error) {
     return NextResponse.json(
       {
