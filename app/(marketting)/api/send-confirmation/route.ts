@@ -20,6 +20,7 @@ type BookingRequest = {
   confirmationNumber: string;
   paymentMethod?: string;
   receipt?: Receipt;
+  status?: "pending" | "approved" | "cancelled"; // Add status field
 };
 
 export async function POST(
@@ -48,7 +49,7 @@ export async function POST(
       !process.env.EMAIL_HOST ||
       !process.env.EMAIL_PORT ||
       !process.env.EMAIL_USER ||
-      !process.env.EMAIL_PASS
+      !process.env.EMAIL_PASSWORD
     ) {
       console.error(
         "Missing email environment variables."
@@ -76,9 +77,24 @@ export async function POST(
 
         auth: {
           user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
+          pass: process.env.EMAIL_PASSWORD,
         },
       });
+
+    // Determine email subject and status message based on booking status
+    let emailSubject = `Booking Confirmation - ${booking.confirmationNumber}`;
+    let statusMessage = "PENDING APPROVAL";
+    let statusColor = "#00ff99";
+
+    if (booking.status === "approved") {
+      emailSubject = `✓ Your Booking Has Been Approved - ${booking.confirmationNumber}`;
+      statusMessage = "APPROVED";
+      statusColor = "#00ff99";
+    } else if (booking.status === "cancelled") {
+      emailSubject = `✗ Your Booking Has Been Cancelled - ${booking.confirmationNumber}`;
+      statusMessage = "CANCELLED";
+      statusColor = "#ff4444";
+    }
 
     const receiptHtml = booking.receipt
       ? `
@@ -247,7 +263,7 @@ export async function POST(
 
       to: booking.email,
 
-      subject: `Booking Confirmation - ${booking.confirmationNumber}`,
+      subject: emailSubject,
 
       html: `
         <div
@@ -281,7 +297,13 @@ export async function POST(
                 letter-spacing:1px;
               "
             >
-              BOOKING CONFIRMATION
+              ${
+                booking.status === "approved"
+                  ? "✓ BOOKING APPROVED"
+                  : booking.status === "cancelled"
+                  ? "✗ BOOKING CANCELLED"
+                  : "BOOKING CONFIRMATION"
+              }
             </h1>
 
             <p
@@ -291,8 +313,13 @@ export async function POST(
                 font-size:15px;
               "
             >
-              Your booking request has
-              been successfully received.
+              ${
+                booking.status === "approved"
+                  ? "Your booking has been approved!"
+                  : booking.status === "cancelled"
+                  ? "Your booking has been cancelled."
+                  : "Your booking request has been successfully received."
+              }
             </p>
           </div>
 
@@ -311,10 +338,13 @@ export async function POST(
                 line-height:1.7;
               "
             >
-              Thank you for choosing our
-              service. Your booking is
-              currently under review and
-              waiting for approval.
+              ${
+                booking.status === "approved"
+                  ? "Great news! Your booking has been approved by our team. We're excited to work with you!"
+                  : booking.status === "cancelled"
+                  ? "Your booking has been cancelled. If you have any questions or would like to reschedule, please feel free to contact us."
+                  : "Thank you for choosing our service. Your booking is currently under review and waiting for approval."
+              }
             </p>
 
             <div
@@ -442,11 +472,11 @@ export async function POST(
                   <td
                     style="
                       padding:8px 0;
-                      color:#00ff99;
+                      color:${statusColor};
                       font-weight:bold;
                     "
                   >
-                    PENDING APPROVAL
+                    ${statusMessage}
                   </td>
                 </tr>
 

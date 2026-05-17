@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseRequest } from "@/lib/supabase/server";
-import { sendEmail, getApprovalEmail, getCancellationEmail, type BookingEmailData } from "@/lib/email";
 import type {
   BookingPayload,
   BookingRow,
@@ -184,25 +183,36 @@ export async function PATCH(req: Request) {
     const updatedBooking = rows[0];
     const statusChanged = body.status && body.status !== currentBooking.status;
 
-    // Send email if status changed to approved or cancelled
-    if (statusChanged && updatedBooking.email) {
-      const emailData: BookingEmailData = {
-        clientName: updatedBooking.name,
-        clientEmail: updatedBooking.email,
-        confirmationNumber: updatedBooking.confirmation_number,
-        bookingDate: updatedBooking.booking_date,
-        packageType: updatedBooking.package_type,
-        message: updatedBooking.message,
-      };
+    // Trigger send-confirmation email if status changed to approved or cancelled
+    if (statusChanged && updatedBooking.email && (updatedBooking.status === "approved" || updatedBooking.status === "cancelled")) {
+      try {
+        const confirmationPayload = {
+          name: updatedBooking.name,
+          email: updatedBooking.email,
+          phone: updatedBooking.phone,
+          date: updatedBooking.booking_date,
+          packageType: updatedBooking.package_type,
+          message: updatedBooking.message || undefined,
+          confirmationNumber: updatedBooking.confirmation_number,
+          status: updatedBooking.status, // Pass status: "approved" or "cancelled"
+        };
 
-      if (updatedBooking.status === "approved") {
-        const emailParams = getApprovalEmail(emailData);
-        void sendEmail(emailParams); // Non-blocking
-        console.log(`✓ Approval email sent to ${updatedBooking.email}`);
-      } else if (updatedBooking.status === "cancelled") {
-        const emailParams = getCancellationEmail(emailData);
-        void sendEmail(emailParams); // Non-blocking
-        console.log(`✗ Cancellation email sent to ${updatedBooking.email}`);
+        // Non-blocking call to send-confirmation
+        void fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/send-confirmation`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(confirmationPayload),
+        }).then(res => {
+          if (res.ok) {
+            console.log(`✓ ${updatedBooking.status === "approved" ? "Approval" : "Cancellation"} email sent to ${updatedBooking.email}`);
+          } else {
+            console.error(`✗ Failed to send ${updatedBooking.status} email to ${updatedBooking.email}`);
+          }
+        }).catch(err => {
+          console.error(`✗ Error triggering send-confirmation: ${err.message}`);
+        });
+      } catch (emailError) {
+        console.error("Error triggering send-confirmation:", emailError);
       }
     }
 
