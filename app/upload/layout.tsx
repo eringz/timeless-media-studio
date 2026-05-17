@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 export default function UploadLayout({ children }: { children: React.ReactNode }) {
   return (
     // Malinis na lalabas ang page mo rito, walang haharang na Header o Footer
-    <div className="w-full min-h-screen flex items-center justify-center p-4 bg-neutral-900">
+    <div className="w-full min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#E5E5E5] to-[#4FACFE]bg-[#E5E5E5]">
       {children}
     </div>
   );
