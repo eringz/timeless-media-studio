@@ -3,31 +3,40 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseKey = supabaseAnonKey!;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Missing Supabase Environment Variables");
+// Skip validation during build time
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
+
+if (!isBuildTime) {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing Supabase Environment Variables");
+  }
+
+  if (!supabaseUrl) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable.');
+  }
+
+  if (!supabaseKey) {
+    throw new Error(
+      'Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable.'
+    );
+  }
 }
 
-if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable.');
-}
-
-if (!supabaseKey) {
-  throw new Error(
-    'Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable.'
-  );
-}
-
-const baseUrl = `${supabaseUrl.replace(/\/$/, '')}/rest/v1`;
+const baseUrl = `${supabaseUrl?.replace(/\/$/, '')}/rest/v1`;
 
 export async function supabaseRequest<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Missing Supabase Environment Variables");
+  }
+
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
-      apikey: supabaseKey!,
-      Authorization: `Bearer ${supabaseKey!}`,
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
       ...(init.headers || {}),

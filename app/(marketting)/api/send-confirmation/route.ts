@@ -51,7 +51,7 @@ export async function POST(
       !process.env.EMAIL_USER ||
       !process.env.EMAIL_PASSWORD
     ) {
-      console.error("Missing email environment variables:", {
+      console.error("❌ Missing email environment variables:", {
         EMAIL_HOST: !!process.env.EMAIL_HOST,
         EMAIL_PORT: !!process.env.EMAIL_PORT,
         EMAIL_USER: !!process.env.EMAIL_USER,
@@ -68,36 +68,35 @@ export async function POST(
       );
     }
 
+    console.log("📧 Email Configuration:", {
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: process.env.EMAIL_SECURE === "true",
+      user: process.env.EMAIL_USER?.substring(0, 5) + "***",
+      environment: process.env.NODE_ENV,
+    });
+
+    const transportConfig = {
+      host: process.env.EMAIL_HOST,
+      port: Number(
+        process.env.EMAIL_PORT
+      ),
+      secure:
+        process.env.EMAIL_SECURE ===
+        "true" || process.env.EMAIL_PORT === "465",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
+    };
+
     const transporter =
-      nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: Number(
-          process.env.EMAIL_PORT
-        ),
-        secure:
-          process.env.EMAIL_SECURE ===
-          "true",
+      nodemailer.createTransport(transportConfig);
 
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD,
-        },
-      });
-
-    // Verify transporter connection
-    try {
-      await transporter.verify();
-      console.log("✓ Email transporter verified");
-    } catch (verifyError) {
-      console.error("✗ Email transporter verification failed:", verifyError);
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Email service unavailable.",
-        },
-        { status: 500 }
-      );
-    }
+    // Log transporter creation
+    console.log("✓ Email transporter created");
 
     // Determine email subject and status message based on booking status
     let emailSubject = `Booking Confirmation - ${booking.confirmationNumber}`;
@@ -279,6 +278,10 @@ export async function POST(
     // Send email with proper error handling
     let mailResult;
     try {
+      console.log(`📨 Attempting to send email to: ${booking.email}`);
+      console.log(`   Status: ${booking.status || "pending"}`);
+      console.log(`   Confirmation #: ${booking.confirmationNumber}`);
+      
       mailResult = await transporter.sendMail({
         from: `"Timeless Media Studio" <${process.env.EMAIL_USER}>`,
 
@@ -584,9 +587,27 @@ export async function POST(
         </div>
       `,
       });
-      console.log(`✓ Email sent successfully to ${booking.email} (Message ID: ${mailResult.messageId})`);
+      console.log(`✅ Email sent successfully to ${booking.email}`);
+      console.log(`   Message ID: ${mailResult.messageId}`);
+      console.log(`   Response: ${mailResult.response}`);
     } catch (sendError) {
-      console.error(`✗ Email send error for ${booking.email}:`, sendError);
+      console.error(`❌ Email send error for ${booking.email}:`);
+      console.error(`   Error Type: ${sendError instanceof Error ? sendError.name : typeof sendError}`);
+      console.error(`   Error Message: ${sendError instanceof Error ? sendError.message : String(sendError)}`);
+      console.error(`   Full Error:`, sendError);
+      
+      // Log additional debugging info
+      interface ErrorWithCode extends Error {
+        code?: string;
+      }
+      
+      if (sendError instanceof Error) {
+        const err = sendError as ErrorWithCode;
+        if (err.code) {
+          console.error(`   Error Code: ${err.code}`);
+        }
+      }
+      
       throw sendError;
     }
 
@@ -595,19 +616,34 @@ export async function POST(
       confirmationNumber:
         booking.confirmationNumber,
       message: `${booking.status === "approved" ? "Approval" : booking.status === "cancelled" ? "Cancellation" : "Confirmation"} email sent successfully to ${booking.email}`,
+      messageId: mailResult?.messageId,
     });
   } catch (error: unknown) {
-    console.error(
-      "Send email error:",
-      error
-    );
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    interface ErrorWithCode extends Error {
+      code?: string;
+    }
+    
+    let errorCode: string | null = null;
+    if (error instanceof Error) {
+      const err = error as ErrorWithCode;
+      errorCode = err.code || null;
+    }
+    
+    console.error(`\n❌ FINAL ERROR - Email send failed`);
+    console.error(`   Message: ${errorMessage}`);
+    console.error(`   Code: ${errorCode}`);
+    console.error(`   Type: ${error instanceof Error ? error.name : typeof error}`);
 
     return NextResponse.json(
       {
         success: false,
         message:
           "Failed to send confirmation email.",
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: errorMessage,
+        errorCode: errorCode,
+        details: process.env.NODE_ENV === "development" ? String(error) : undefined,
       },
       { status: 500 }
     );

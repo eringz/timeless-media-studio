@@ -51,22 +51,97 @@ The application uses Gmail SMTP to send booking confirmation and status update e
 #### ❌ "Email server configuration error"
 - **Cause**: Missing or incorrect environment variables in Vercel
 - **Fix**: Double-check all EMAIL_* variables are set in Vercel Settings
+- **Verify**: Check Vercel Logs → Deployments → select deployment → Logs (filter for "Email Configuration")
 
 #### ❌ "Failed to send confirmation email"
-- **Cause**: Gmail app password might be incorrect or Gmail security issue
-- **Fix**: 
-  1. Re-create the app password in Google Account settings
-  2. Make sure 2-Step Verification is enabled
-  3. Try allowing "Less secure app access" if app password doesn't work
+- **Causes**: 
+  1. Gmail app password might be incorrect
+  2. Less secure apps might be blocked
+  3. SMTP connection issues in Vercel environment
+- **Fix**:
+  1. Regenerate app password in [Google Account Settings](https://myaccount.google.com/apppasswords)
+  2. Copy the exact 16-character password (with spaces)
+  3. Update in Vercel environment variables
+  4. Redeploy your application
 
-#### ❌ "Email send error: Invalid login"
+#### ❌ "Invalid login" or "Authentication failed"
 - **Cause**: Email credentials are incorrect
-- **Fix**: Verify the app password is exactly correct (spaces in app password are normal)
+- **Fix**: 
+  1. Verify EMAIL_USER is correct (full Gmail address)
+  2. Verify EMAIL_PASSWORD is the app password, not regular password
+  3. Ensure no extra spaces or characters in password
+  4. If using 2FA, make sure app password is generated (not regular password)
+
+#### ❌ "Connection timeout" 
+- **Cause**: Vercel serverless timeout or SMTP server unreachable
+- **Potential Fixes**:
+  1. Try changing EMAIL_PORT to 465 (if 587 doesn't work)
+  2. Try changing EMAIL_SECURE to "true" (if "false" doesn't work)
+  3. Check if Gmail SMTP is being blocked by firewall/network
+  4. Check Vercel function timeout settings (default 60s)
 
 #### ✅ Email Working Locally but Not in Vercel
-- **Cause**: Environment variables are set locally but not in Vercel
+- **Cause**: Environment variables set locally but not in Vercel
 - **Fix**: Ensure ALL EMAIL_* variables are added to Vercel Settings
 - **Note**: `.env.local` is for local development only and is never deployed to Vercel
+- **Debugging**: 
+  1. Go to Vercel Dashboard → Deployments
+  2. Select the latest deployment
+  3. Click on "Logs" (Runtime Logs tab)
+  4. Look for "Email Configuration:" logs to see what variables are being used
+
+### Debugging Email Issues in Vercel
+
+#### Step 1: Check Vercel Logs
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+2. Select **timeless-media-studio**
+3. Go to **Deployments**
+4. Click on the latest deployment
+5. Click **Logs** tab (Runtime Logs)
+6. Look for entries starting with 📧 or ❌
+
+#### Step 2: Check Email Configuration
+The logs will show:
+```
+📧 Email Configuration: {
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "secure": false,
+  "user": "hib***",
+  "environment": "production"
+}
+```
+
+If variables are missing, you'll see:
+```
+❌ Missing email environment variables: {
+  "EMAIL_HOST": false,
+  "EMAIL_PORT": false,
+  "EMAIL_USER": false,
+  "EMAIL_PASSWORD": false
+}
+```
+
+#### Step 3: Test Email Sending
+1. Go to admin panel: `https://your-domain.vercel.app/admin`
+2. Select a booking
+3. Change status to "Approved" or "Cancelled"
+4. Check Vercel logs for email send attempt
+5. Look for either:
+   - ✅ `Email sent successfully` = Success
+   - ❌ `Email send error` = Check error details in logs
+
+### Port Configuration Reference
+
+If Email sending fails, try different port/secure combinations:
+
+| EMAIL_PORT | EMAIL_SECURE | Protocol | Status |
+|-----------|--------------|----------|--------|
+| 587 | false | STARTTLS | ← Try this first |
+| 465 | true | SSL/TLS | ← Try if 587 fails |
+| 25 | false | Plain SMTP | ← Rarely works on Vercel |
+
+Most reliable for Gmail on Vercel: **Port 587 with STARTTLS**
 
 ### Environment Variables Summary
 
