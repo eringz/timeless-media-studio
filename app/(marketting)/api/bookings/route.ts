@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseRequest } from "@/lib/supabase/server";
-import { sendEmail, getApprovalEmail, getCancellationEmail } from "@/lib/email";
+import { sendEmail, getApprovalEmail, getCancellationEmail, type BookingEmailData } from "@/lib/email";
 import type {
   BookingPayload,
   BookingRow,
@@ -186,20 +186,23 @@ export async function PATCH(req: Request) {
 
     // Send email if status changed to approved or cancelled
     if (statusChanged && updatedBooking.email) {
+      const emailData: BookingEmailData = {
+        clientName: updatedBooking.name,
+        clientEmail: updatedBooking.email,
+        confirmationNumber: updatedBooking.confirmation_number,
+        bookingDate: updatedBooking.booking_date,
+        packageType: updatedBooking.package_type,
+        message: updatedBooking.message,
+      };
+
       if (updatedBooking.status === "approved") {
-        const emailParams = getApprovalEmail(
-          updatedBooking.name,
-          updatedBooking.confirmation_number
-        );
-        emailParams.to = updatedBooking.email;
+        const emailParams = getApprovalEmail(emailData);
         void sendEmail(emailParams); // Non-blocking
+        console.log(`✓ Approval email sent to ${updatedBooking.email}`);
       } else if (updatedBooking.status === "cancelled") {
-        const emailParams = getCancellationEmail(
-          updatedBooking.name,
-          updatedBooking.confirmation_number
-        );
-        emailParams.to = updatedBooking.email;
+        const emailParams = getCancellationEmail(emailData);
         void sendEmail(emailParams); // Non-blocking
+        console.log(`✗ Cancellation email sent to ${updatedBooking.email}`);
       }
     }
 
