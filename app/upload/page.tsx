@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { MdOutlineUpload } from "react-icons/md";
 import { BiPhotoAlbum } from "react-icons/bi";
@@ -7,13 +7,77 @@ import { BiPhotoAlbum } from "react-icons/bi";
 
 const Upload = () => {
     const [isDisplay, setIsDisplay] = useState(false);
+    const [date, setDate] = useState("");
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+
+
+
+
+    useEffect(() => {
+
+        const updateClock = () => {
+            const now = new Date();
+
+            const options: Intl.DateTimeFormatOptions = {
+                year: "numeric", 
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric",
+                hour12: true
+            }
+
+            setDate(now.toLocaleDateString("en-PH", options ))
+
+        }
+
+        updateClock();
+
+        const interval = setInterval(updateClock, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+
+    const handlePhotoLibraryClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+
+        setIsDisplay(false);
+    }
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+
+        if (files && files.length > 0) {
+            const selectedFile = files[0];
+
+            alert(`Selected file from Gallery: ${selectedFile.name}`);
+
+            
+        }
+    }
+
     return (
         <div className="flex flex-col justify-center  items-center px-4 py-8 w-full min-h-screen">
+
+            <input 
+                title="photo library"
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+            />
             <div
                 className="bg-[url(/images/gallery/wedding.png)] flex flex-col justify-end items-start px-4 pb-8 mb-4 h-96 w-full max-w-sm bg-no-repeat bg-fit bg-center rounded-md shadow-lg shadow-black/40"
             >
                 <h3 className="text-xl text-white font-bold tracking-wide">Timeless Media Studio</h3>
-                <span className="text-sm text-gray-300">May 17 2026</span>
+                <span className="p-2 bg-black/20 text-sm text-gray-300 rounded text-shadow-lg text-blue-900">{date}</span>
             </div>
 
             {/** BUTTONS and MENU Container */}
@@ -43,6 +107,7 @@ const Upload = () => {
                         `}
                     >
                         <button
+                            onClick={handlePhotoLibraryClick}
                             className="p-3 w-full text-sm hover:bg-white/5 text-left rounded-t-xl transition-colors "
                         >
                             Photo Library
