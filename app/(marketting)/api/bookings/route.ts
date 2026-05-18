@@ -185,10 +185,17 @@ export async function PATCH(req: Request) {
 
     // Trigger send-confirmation email if status changed to approved or cancelled
     if (statusChanged && updatedBooking.email && (updatedBooking.status === "approved" || updatedBooking.status === "cancelled")) {
+      console.log(`\n📨 ===== EMAIL TRIGGER START =====`);
+      console.log(`Status: ${updatedBooking.status}`);
+      console.log(`Email: ${updatedBooking.email}`);
+      console.log(`Confirmation #: ${updatedBooking.confirmation_number}`);
+      
       try {
+        console.log(`🔍 Importing sendBookingEmail utility...`);
         const { sendBookingEmail } = await import(
           "@/lib/email/send-booking-email"
         );
+        console.log(`✓ Import successful`);
 
         const confirmationPayload = {
           name: updatedBooking.name,
@@ -201,21 +208,31 @@ export async function PATCH(req: Request) {
           status: updatedBooking.status,
         };
 
-        console.log(
-          `📨 Sending ${updatedBooking.status} email to ${updatedBooking.email}`
-        );
+        console.log(`📋 Payload:`, {
+          name: confirmationPayload.name,
+          email: confirmationPayload.email,
+          phone: confirmationPayload.phone,
+          date: confirmationPayload.date,
+          packageType: confirmationPayload.packageType,
+          confirmationNumber: confirmationPayload.confirmationNumber,
+          status: confirmationPayload.status,
+          hasMessage: !!confirmationPayload.message,
+        });
 
-        // Direct call instead of fetch - no network delays
-        await sendBookingEmail(confirmationPayload);
-
-        console.log(
-          `✅ ${updatedBooking.status === "approved" ? "Approval" : "Cancellation"} email sent successfully`
-        );
+        console.log(`📤 Calling sendBookingEmail...`);
+        const result = await sendBookingEmail(confirmationPayload);
+        
+        console.log(`✅ Email send result:`, result);
+        console.log(`📨 ===== EMAIL TRIGGER SUCCESS =====\n`);
       } catch (emailError) {
-        console.error(
-          `❌ Error sending ${updatedBooking.status} email:`,
-          emailError
-        );
+        console.error(`\n❌ ===== EMAIL TRIGGER FAILED =====`);
+        console.error(`Status: ${updatedBooking.status}`);
+        console.error(`Email: ${updatedBooking.email}`);
+        console.error(`Error Name: ${emailError instanceof Error ? emailError.name : "Unknown"}`);
+        console.error(`Error Message: ${emailError instanceof Error ? emailError.message : String(emailError)}`);
+        console.error(`Error Stack:`, emailError instanceof Error ? emailError.stack : "No stack");
+        console.error(`Full Error Object:`, emailError);
+        console.error(`❌ ===== EMAIL TRIGGER FAILED =====\n`);
         // Don't throw - email error shouldn't fail the booking update
       }
     }

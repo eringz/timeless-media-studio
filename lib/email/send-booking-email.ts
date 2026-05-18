@@ -23,6 +23,10 @@ type BookingRequest = {
 };
 
 export async function sendBookingEmail(booking: BookingRequest) {
+  console.log(`\n📧 ===== UTILITY: sendBookingEmail START =====`);
+  console.log(`Recipient: ${booking.email}`);
+  console.log(`Status: ${booking.status}`);
+  
   // Validate environment variables
   if (
     !process.env.EMAIL_HOST ||
@@ -30,8 +34,17 @@ export async function sendBookingEmail(booking: BookingRequest) {
     !process.env.EMAIL_USER ||
     !process.env.EMAIL_PASSWORD
   ) {
+    const missingVars = {
+      EMAIL_HOST: !!process.env.EMAIL_HOST,
+      EMAIL_PORT: !!process.env.EMAIL_PORT,
+      EMAIL_USER: !!process.env.EMAIL_USER,
+      EMAIL_PASSWORD: !!process.env.EMAIL_PASSWORD,
+    };
+    console.error(`❌ Missing email environment variables:`, missingVars);
     throw new Error("Missing email environment variables");
   }
+
+  console.log(`✓ Environment variables validated`);
 
   const portNum = Number(process.env.EMAIL_PORT);
   const isSecure = process.env.EMAIL_SECURE === "true" || portNum === 465;
@@ -67,6 +80,7 @@ export async function sendBookingEmail(booking: BookingRequest) {
     socketTimeout: 10000,
   };
 
+  console.log(`🔌 Creating transporter with port ${finalPort}, secure: ${finalSecure}`);
   const transporter = nodemailer.createTransport(transportConfig);
 
   // Verify SMTP connection
@@ -98,6 +112,12 @@ export async function sendBookingEmail(booking: BookingRequest) {
     statusMessage = "CANCELLED";
     statusColor = "#ff4444";
   }
+
+  console.log(`📝 Email Template:`, {
+    subject: emailSubject,
+    statusMessage,
+    hasReceipt: !!booking.receipt,
+  });
 
   const receiptHtml = booking.receipt
     ? `
@@ -202,9 +222,11 @@ export async function sendBookingEmail(booking: BookingRequest) {
   // Send email with proper error handling
   let mailResult;
   try {
-    console.log(`📨 Attempting to send email to: ${booking.email}`);
-    console.log(`   Status: ${booking.status || "pending"}`);
-    console.log(`   Confirmation #: ${booking.confirmationNumber}`);
+    console.log(`\n📤 ===== SENDING EMAIL START =====`);
+    console.log(`To: ${booking.email}`);
+    console.log(`Subject: ${emailSubject}`);
+    console.log(`Size: ${emailSubject.length} chars`);
+    console.log(`🔐 Using auth: ${process.env.EMAIL_USER?.substring(0, 5)}***`);
 
     mailResult = await transporter.sendMail({
       from: `"Timeless Media Studio" <${process.env.EMAIL_USER}>`,
@@ -479,9 +501,10 @@ export async function sendBookingEmail(booking: BookingRequest) {
       `,
     });
 
-    console.log(`✅ Email sent successfully to ${booking.email}`);
+  console.log(`✅ Email sent successfully to ${booking.email}`);
     console.log(`   Message ID: ${mailResult.messageId}`);
     console.log(`   Response: ${mailResult.response}`);
+    console.log(`📧 ===== UTILITY: sendBookingEmail SUCCESS =====\n`);
 
     return {
       success: true,
@@ -490,6 +513,7 @@ export async function sendBookingEmail(booking: BookingRequest) {
       messageId: mailResult.messageId,
     };
   } catch (sendError) {
+    console.error(`\n❌ ===== UTILITY: sendBookingEmail FAILED =====`);
     console.error(`❌ Email send error for ${booking.email}:`);
     console.error(
       `   Error Type: ${sendError instanceof Error ? sendError.name : typeof sendError}`
@@ -509,8 +533,12 @@ export async function sendBookingEmail(booking: BookingRequest) {
       if (err.code) {
         console.error(`   Error Code: ${err.code}`);
       }
+      if (err.stack) {
+        console.error(`   Stack:`, err.stack);
+      }
     }
-
+    
+    console.error(`❌ ===== UTILITY: sendBookingEmail FAILED =====\n`);
     throw sendError;
   }
 }
