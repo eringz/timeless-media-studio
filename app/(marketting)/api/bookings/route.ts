@@ -186,6 +186,10 @@ export async function PATCH(req: Request) {
     // Trigger send-confirmation email if status changed to approved or cancelled
     if (statusChanged && updatedBooking.email && (updatedBooking.status === "approved" || updatedBooking.status === "cancelled")) {
       try {
+        const { sendBookingEmail } = await import(
+          "@/lib/email/send-booking-email"
+        );
+
         const confirmationPayload = {
           name: updatedBooking.name,
           email: updatedBooking.email,
@@ -194,35 +198,25 @@ export async function PATCH(req: Request) {
           packageType: updatedBooking.package_type,
           message: updatedBooking.message || undefined,
           confirmationNumber: updatedBooking.confirmation_number,
-          status: updatedBooking.status, // Pass status: "approved" or "cancelled"
+          status: updatedBooking.status,
         };
 
-        // Construct correct API URL
-        const apiUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}/api/send-confirmation`
-          : 'http://localhost:3000/api/send-confirmation';
+        console.log(
+          `📨 Sending ${updatedBooking.status} email to ${updatedBooking.email}`
+        );
 
-        console.log(`📨 Triggering email for ${updatedBooking.status} status to ${updatedBooking.email}`);
-        console.log(`   API URL: ${apiUrl}`);
+        // Direct call instead of fetch - no network delays
+        await sendBookingEmail(confirmationPayload);
 
-        // Non-blocking call to send-confirmation
-        void fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(confirmationPayload),
-        }).then(async res => {
-          const responseText = await res.text();
-          if (res.ok) {
-            console.log(`✅ ${updatedBooking.status === "approved" ? "Approval" : "Cancellation"} email triggered for ${updatedBooking.email}`);
-          } else {
-            console.error(`❌ Failed to trigger ${updatedBooking.status} email to ${updatedBooking.email}`);
-            console.error(`   Response: ${responseText}`);
-          }
-        }).catch(err => {
-          console.error(`❌ Error triggering send-confirmation:`, err);
-        });
+        console.log(
+          `✅ ${updatedBooking.status === "approved" ? "Approval" : "Cancellation"} email sent successfully`
+        );
       } catch (emailError) {
-        console.error("Error triggering send-confirmation:", emailError);
+        console.error(
+          `❌ Error sending ${updatedBooking.status} email:`,
+          emailError
+        );
+        // Don't throw - email error shouldn't fail the booking update
       }
     }
 
