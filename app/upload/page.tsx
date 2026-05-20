@@ -113,15 +113,15 @@ const Upload = () => {
                             Photo Library
                         </button>
                         <button
-                            className="p-3 py-3 w-full text-sm border-t border-b  border-white/15 hover:bg-white/5 text-left transition-colors "
+                            className="p-3 py-3 w-full text-sm border-t border-b  border-white/15 rounded-b-xl hover:bg-white/5 text-left transition-colors "
                         >
                             Take photo or Video
                         </button>
-                        <button
+                        {/* <button
                             className="p-3 text-sm w-full hover:bg-white/5 text-left rounded-b-xl transition-colors"
                         >
                             Choose File
-                        </button>
+                        </button> */}
                     </div>
                     
                 </div>
