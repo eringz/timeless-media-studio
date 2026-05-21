@@ -8,11 +8,9 @@ import { BiPhotoAlbum } from "react-icons/bi";
 const Upload = () => {
     const [isDisplay, setIsDisplay] = useState(false);
     const [date, setDate] = useState("");
+    const [isUploading, setIsUploading] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-
-
 
 
     useEffect(() => {
@@ -43,6 +41,7 @@ const Upload = () => {
 
 
     const handlePhotoLibraryClick = () => {
+
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }
@@ -54,9 +53,13 @@ const Upload = () => {
         const files = event.target.files;
 
         if (files && files.length > 0) {
-            const selectedFile = files[0];
+            setIsUploading(true);
 
-            alert(`Selected file from Gallery: ${selectedFile.name}`);
+            // const selectedFile = files[0];
+            const fileArray = Array.from(files);
+
+
+            alert(`No of Files Selected: ${fileArray.length}`);
 
             
         }
