@@ -75,6 +75,7 @@ const Upload = () => {
                 onChange={handleFileChange}
                 accept="image/*"
                 className="hidden"
+                multiple
             />
             <div
                 className="bg-[url(/images/gallery/wedding.png)] flex flex-col justify-end items-start px-4 pb-8 mb-4 h-96 w-full max-w-sm bg-no-repeat bg-fit bg-center rounded-md shadow-lg shadow-black/40"
