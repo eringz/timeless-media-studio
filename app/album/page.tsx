@@ -22,7 +22,7 @@ export default function AlbumPage() {
           <div
             className="relative z-10 flex flex-col w-full"
           >
-            <h1 className="mt-40 text-2xl md:text-3xl font-bold tracking-wide text-white/60 text-center flex-1 drop-shadow-md drop-shadow-white/20">
+            <h1 className="mt-40 text-2xl md:text-3xl font-bold tracking-widest text-white/60 text-center flex-1 drop-shadow-md drop-shadow-white/20">
               Timeless Media Studio 
             </h1>
 

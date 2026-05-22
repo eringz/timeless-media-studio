@@ -16,11 +16,7 @@ export const getSupabase = () => {
       autoRefreshToken: true,
     },
   });
-
-  // if (client.storage && (client as any).storage.url) {
-  //   (client as any).storage.url = `${supabaseUrl}`;
-  // }
-
+  
   return client;
 };
 

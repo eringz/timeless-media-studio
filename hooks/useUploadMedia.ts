@@ -13,6 +13,7 @@ export function useUploadMedia({
     const [date, setDate] = useState<string | null>(null);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const updateClock = () => {
@@ -47,6 +48,12 @@ export function useUploadMedia({
         setIsDisplay(false);
     }
 
+    const handleCameraClick = () => {
+        if (cameraInputRef.current) {
+            setIsDisplay(false);
+        }
+    }
+
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const success = await onUploadTrigger(event.target.files);
 
@@ -55,14 +62,17 @@ export function useUploadMedia({
         }
 
         if (fileInputRef.current) fileInputRef.current.value = "";
+        if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
     
     return {
         date,
         isDisplay,
         fileInputRef,
+        cameraInputRef,
         toggleDropdown,
         handlePhotoLibraryClick,
+        handleCameraClick,
         handleFileChange
     }
 }

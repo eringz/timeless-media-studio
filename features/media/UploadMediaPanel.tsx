@@ -18,8 +18,10 @@ const UploadMediaPanel = ({
         date,
         isDisplay,
         fileInputRef,
+        cameraInputRef,
         toggleDropdown,
         handlePhotoLibraryClick,
+        handleCameraClick,
         handleFileChange,
     } = useUploadMedia({isUploading, onUploadTrigger})
     
@@ -27,6 +29,7 @@ const UploadMediaPanel = ({
         <div
             className="flex flex-col justify-center items-center w-full max-w-sm mx-auto"
         >
+            {/** WHEN CLICKED PHOTO LIBRARY */}
             <input 
                 title="photo library"
                 type="file"
@@ -37,10 +40,21 @@ const UploadMediaPanel = ({
                 multiple
             />
 
+            {/** WHEN CLICKED TAKE PHOTO OR VIDEO */}
+            <input 
+                title="take photo or video"
+                type="file"
+                ref={cameraInputRef}
+                onChange={handleFileChange}
+                accept="image/*,video/*"
+                capture="environment"
+                className="hidden"
+            />
+
             <div
                 className="bg-[url(/images/gallery/wedding.png)] flex flex-col justify-end items-start px-4 pb-8 mb-4 h-96 w-full bg-no-repeat bg-cover bg-center rounded-md shadow-lg shadow-black/40"
             >
-                <h3 className="text-xl text-white font-bold tracking-wide">Timeless Media Studio</h3>
+                <h3 className="text-xl bg-black/20 text-white/80 font-bold tracking-wide">Timeless Media Studio</h3>
                 <span className="p-2 bg-black/20 rounded text-sm text-gray-300 text-shadow-lg">{date}</span>
             </div>
 
@@ -69,6 +83,7 @@ const UploadMediaPanel = ({
                     </button>
                     <button 
                         title="take photo or video"
+                        onClick={handleCameraClick}
                         className="p-3 py-3 w-full text-sm border-t border-b border-white/15 hover:bg-white/5 text-left transition-colors"
                     >
                         Take Photo or Video
