@@ -9,7 +9,7 @@ const QR = () => {
     return (
         <div className="flex flex-col gap-8 justify-center items-center py-16 mt-8 w-full h-fit border border-white/60 rounded-md  shadow-lg shadow-gray-500">
             <Canvas 
-                text={`https://timeless.dreamplanfix.com/upload`}
+                text={`https://timeless.dreamplanfix.com/studio`}
                 options={{
                     type:"image/jpeg",
                     quality: 0.3,
