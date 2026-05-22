@@ -10,10 +10,6 @@ export const mediaService = {
     async uploadMedia(file: File, bucketName: string = "timeless-media-studio") : Promise<UploadMediaResponse> {
         if (!supabase) {
             console.warn("Supabase client is not initialized yet (Build Time).");
-            return {
-                fileName: file.name,
-                fileUrl: ""
-            };
         }
 
         const fileExt = file.name.split('.').pop();
@@ -59,10 +55,6 @@ export const mediaService = {
     async getAllMedia() {
         if (!supabase) {
             console.warn("Supabase client is not initialized yet (Build Time).");
-            return {
-                fileName: file.name,
-                fileUrl: ""
-            };
         }
 
         const { data, error } = await supabase
