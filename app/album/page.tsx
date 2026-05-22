@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useMediaGallery } from "@/hooks/useMediaGallery";
 import MediaAlbumGrid from "@/features/media/MediaAlbumGrid";
 
+export const dynamic = "force-dynamic";
+
 export default function AlbumPage() {
   const { mediaList, isLoadingAlbum } = useMediaGallery();
 
