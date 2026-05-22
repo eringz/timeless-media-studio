@@ -8,7 +8,7 @@ export interface UploadMediaResponse {
 export const mediaService = {
     
     async uploadMedia(file: File, bucketName: string = "timeless-media-studio"): Promise<UploadMediaResponse> {
-        // Kunin ang ligtas na instance ng Supabase
+        
         const supabase = getSupabase();
 
         const fileExt = file.name.split('.').pop();
@@ -51,7 +51,7 @@ export const mediaService = {
     },
 
     async getAllMedia() {
-        // Kunin ang ligtas na instance ng Supabase
+        
         const supabase = getSupabase();
         
         const { data, error } = await supabase
