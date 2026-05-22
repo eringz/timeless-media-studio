@@ -17,7 +17,7 @@ export const getSupabaseClient = () => {
   });
 
   if (client.storage && (client as any).storage.url) {
-    (client as any).storage.url = `${supabaseUrl}/storage/v1`;
+    (client as any).storage.url = `${supabaseUrl}`;
   }
 
   return client;
