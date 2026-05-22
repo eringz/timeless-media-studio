@@ -21,7 +21,7 @@ export const getSupabase = () => {
   //   (client as any).storage.url = `${supabaseUrl}`;
   // }
 
-  // return client;
+  return client;
 };
 
 
