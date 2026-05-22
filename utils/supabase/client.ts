@@ -13,12 +13,15 @@ export const getSupabase = () => {
   const client = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
+      autoRefreshToken: true,
     },
   });
 
-  if (client.storage && (client as any).storage.url) {
-    (client as any).storage.url = `${supabaseUrl}`;
-  }
+  // if (client.storage && (client as any).storage.url) {
+  //   (client as any).storage.url = `${supabaseUrl}`;
+  // }
 
-  return client;
+  // return client;
 };
+
+
