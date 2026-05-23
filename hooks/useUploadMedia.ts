@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { cameraService } from "@/services/cameraService"; 
 
 interface useUploadMediaProps {
     isUploading: boolean;
@@ -11,9 +12,12 @@ export function useUploadMedia({
 }: useUploadMediaProps) {
     const [isDisplay, setIsDisplay] = useState(false);
     const [date, setDate] = useState<string | null>(null);
+
+    const [isCameraActive, setIsCameraActive] = useState(false);
+    const [isCapturing, setIsCapturing] = useState(false);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const cameraRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         const updateClock = () => {
@@ -48,10 +52,45 @@ export function useUploadMedia({
         setIsDisplay(false);
     }
 
-    const handleCameraClick = () => {
-        if (cameraInputRef.current) {
-            setIsDisplay(false);
+    const handleCameraClick = async () => {
+        setIsDisplay(false);
+        setIsCameraActive(true);
+        console.log(`isCameraActive: ${isCameraActive}`);
+
+        setTimeout(async () => {
+            if (cameraRef.current) {
+                try {
+                    await cameraService.startCamera(cameraRef.current);
+                } catch (error) {
+                    setIsCameraActive(false);
+                    alert("Failed to start in-app camera device")
+                }
+            }
+        }, 50);
+    }
+
+    const executeCapture = async () => {
+        if (!cameraRef.current) return;
+
+        try {
+            setIsCapturing(true);
+            const file = await cameraService.capturePhoto(cameraRef.current);
+
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+
+            await onUploadTrigger(dataTransfer.files);
+            closeCamera();
+        } catch (error) {
+            console.error(`Capture state handling issue: ${error}`);
+        } finally {
+            setIsCapturing(false);
         }
+    }
+
+    const closeCamera = () => {
+        cameraService.stopCamera();
+        setIsCameraActive(false)
     }
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,17 +101,21 @@ export function useUploadMedia({
         }
 
         if (fileInputRef.current) fileInputRef.current.value = "";
-        if (cameraInputRef.current) cameraInputRef.current.value = "";
+        
     }
     
     return {
         date,
         isDisplay,
         fileInputRef,
-        cameraInputRef,
+        cameraRef,
+        isCameraActive,
+        isCapturing,
         toggleDropdown,
         handlePhotoLibraryClick,
         handleCameraClick,
+        executeCapture,
+        closeCamera,
         handleFileChange
     }
 }

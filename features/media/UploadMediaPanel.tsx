@@ -18,10 +18,14 @@ const UploadMediaPanel = ({
         date,
         isDisplay,
         fileInputRef,
-        cameraInputRef,
+        cameraRef,
+        isCameraActive,
+        isCapturing,
         toggleDropdown,
         handlePhotoLibraryClick,
         handleCameraClick,
+        executeCapture,
+        closeCamera,
         handleFileChange,
     } = useUploadMedia({isUploading, onUploadTrigger})
     
@@ -40,17 +44,7 @@ const UploadMediaPanel = ({
                 multiple
             />
 
-            {/** WHEN CLICKED TAKE PHOTO OR VIDEO */}
-            <input 
-                title="take photo or video"
-                type="file"
-                ref={cameraInputRef}
-                onChange={handleFileChange}
-                accept="image/*,video/*"
-                capture="environment"
-                className="hidden"
-            />
-
+            {/** Timeless background */}
             <div
                 className="bg-[url(/images/gallery/wedding.png)] flex flex-col justify-end items-start px-4 pb-8 mb-4 h-96 w-full bg-no-repeat bg-cover bg-center rounded-md shadow-lg shadow-black/40"
             >
@@ -90,6 +84,46 @@ const UploadMediaPanel = ({
                     </button>
                 </div>
             </div>
+
+            {/** Camera Panel */}
+            {isCameraActive && (
+                <div className="fixed inset-0 z-50 flex flrx-col justify-center items-center bg-blck/95 p-4 backdrop-blur-md">
+                    <div className="relative w-full max-w-sm overflow-hidden rounded-xl bg-[#121212] border border-white/10 shadow-2xl">
+
+                        <div className="absolute top-4 left-4 z-10 px-2 py-1 bg-black/40 text-xs text-emerald-400 font-mono tracking-widest rounded boder border-emerald-500/20  animate-pulse">
+                            LIVE STREAM
+                        </div>
+
+                        <video 
+                            ref={cameraRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full h-96 object-cover bg-neutral-900"
+                        />
+
+
+                        <div className="flex justify-between items-center p-4 bg-[#1A1A1A] border-t border-white/5">
+                            <button
+                                type="button"
+                                onClick={closeCamera}
+                                className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                            >
+                                Close
+                            </button>
+                            <button
+                                type="button"
+                                onClick={executeCapture}
+                                disabled={isCapturing || isUploading}
+                                className="px-6 py-3 bg-white rounded-full text-xs text-black font-bold shadow-lg hover:bg-gray-200 transition-all disabled:opacity-40 tracking-wider"
+                            >
+                                {isCapturing ? "CAPTURING..." : "TAKE SNAPSHOT"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     )
 }
