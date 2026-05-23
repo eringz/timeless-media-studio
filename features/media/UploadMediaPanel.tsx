@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { MdOutlineUpload } from "react-icons/md";
-
 import { useUploadMedia } from "@/hooks/useUploadMedia";
+
+import { MdOutlineUpload, MdFlipCameraIos } from "react-icons/md";
 
 interface UploadMediaPanelProps {
     isUploading: boolean;
@@ -21,9 +20,11 @@ const UploadMediaPanel = ({
         cameraRef,
         isCameraActive,
         isCapturing,
+        facingMode,
         toggleDropdown,
         handlePhotoLibraryClick,
         handleCameraClick,
+        toggleCameraFacing,
         executeCapture,
         closeCamera,
         handleFileChange,
@@ -87,19 +88,28 @@ const UploadMediaPanel = ({
 
             {/** Camera Panel */}
             {isCameraActive && (
-                <div className="fixed inset-0 z-50 flex flrx-col justify-center items-center bg-blck/95 p-4 backdrop-blur-md">
+                <div className="fixed inset-0 z-50 flex flex-col justify-center items-center bg-blck/95 p-4 backdrop-blur-md">
                     <div className="relative w-full max-w-sm overflow-hidden rounded-xl bg-[#121212] border border-white/10 shadow-2xl">
 
                         <div className="absolute top-4 left-4 z-10 px-2 py-1 bg-black/40 text-xs text-emerald-400 font-mono tracking-widest rounded boder border-emerald-500/20  animate-pulse">
                             LIVE STREAM
                         </div>
 
+                        <button
+                            type="button"
+                            title="camera switch"
+                            onClick={toggleCameraFacing}
+                            className="absolute top-4 right-4 z-10 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full border border-white/10 transition-colors"
+                        >
+                            <MdFlipCameraIos size="20" />
+                        </button>
+
                         <video 
                             ref={cameraRef}
                             autoPlay
                             playsInline
                             muted
-                            className="w-full h-96 object-cover bg-neutral-900"
+                            className={`w-full h-96 object-cover bg-neutral-900 transition-transform ${facingMode === 'user' ? 'scale-x-[-1]' : 'scale-x-100'}`}
                         />
 
 

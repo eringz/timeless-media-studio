@@ -1,10 +1,16 @@
 export class CameraService {
     private stream: MediaStream | null = null;
 
-    async startCamera  (videoElement: HTMLVideoElement): Promise<MediaStream>  {
+    async startCamera  (videoElement: HTMLVideoElement, facingMode: "user" | "environment"): Promise<MediaStream>  {
+        this.stopCamera();
+        
         try {
             this.stream = await navigator.mediaDevices.getUserMedia({
-                video: {facingMode: "environment"},
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280 },
+                    height: {ideal: 720 }
+                },
                 audio: false,
             });
 

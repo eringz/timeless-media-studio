@@ -15,6 +15,8 @@ export function useUploadMedia({
 
     const [isCameraActive, setIsCameraActive] = useState(false);
     const [isCapturing, setIsCapturing] = useState(false);
+
+    const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
     
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cameraRef = useRef<HTMLVideoElement>(null);
@@ -60,13 +62,26 @@ export function useUploadMedia({
         setTimeout(async () => {
             if (cameraRef.current) {
                 try {
-                    await cameraService.startCamera(cameraRef.current);
+                    await cameraService.startCamera(cameraRef.current, facingMode);
                 } catch (error) {
                     setIsCameraActive(false);
                     alert("Failed to start in-app camera device")
                 }
             }
         }, 50);
+    }
+
+    const toggleCameraFacing = async () => {
+        const nextMode = facingMode === "environment" ? "user" : "environment";
+        setFacingMode(nextMode);
+
+        if (cameraRef.current) {
+            try {
+                await cameraService.startCamera(cameraRef.current, nextMode);
+            } catch (error) {
+                console.log(`Failed to switch camera lens.`)
+            }
+        }
     }
 
     const executeCapture = async () => {
@@ -111,9 +126,11 @@ export function useUploadMedia({
         cameraRef,
         isCameraActive,
         isCapturing,
+        facingMode,
         toggleDropdown,
         handlePhotoLibraryClick,
         handleCameraClick,
+        toggleCameraFacing,
         executeCapture,
         closeCamera,
         handleFileChange
