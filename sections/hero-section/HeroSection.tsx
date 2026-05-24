@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import QR from "@/sections/hero-section/QR";
 
+import FadeIn from "@/components/FadeIn";
+
 const words = [
   'Moment', 'Memory', 'Story', 'Dream', 'Magic', 
   'Light', 'Frame', 'Essence', 'Beauty', 'Art', 

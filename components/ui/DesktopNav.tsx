@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 import TimelessLogo from "@/components/ui/TimelessLogo";
+import TransitionLink from "@/components/TransitionLink";
 
 interface DesktopNavProps {
   navLinks: {
@@ -29,13 +30,13 @@ const DesktopNav = ({
 
             <div className="flex justify-between gap-8 w-1/2">
                 {navLinks.map((link) => (
-                <Link
+                <TransitionLink
                     key={link.name}
                     href={link.href}
                     className="dm-serif px-8 py-2 rounded text-2xl inset-0 text-shadow-md text-shadow-sky-300/40 white-space-nowrap tracking-widest hover:text-white/40 transition-colors duration-700"
                 >
                     {link.name}
-                </Link>
+                </TransitionLink>
                 ))}
             </div>
             
@@ -46,3 +47,5 @@ const DesktopNav = ({
 };
 
 export default DesktopNav;
+
+

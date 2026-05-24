@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 
 import SectionHeading from "@/components/ui/SectionHeading";
+import FadeIn from "@/components/FadeIn";
 
 
 
@@ -32,31 +33,48 @@ const Gallery = () => {
             <SectionHeading title="GALLERY"/>
             <div className="hidden gallery xl:flex flex-row justify gap-8 px-48 py-8">
                 {/** First Column */}
+                
                 <div className="w-1/3 flex flex-col gap-y-8">
-                    <div
-                        className="h-[700px] bg-[url(/images/gallery/wedding.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl"
-                    >
-                    </div>
-                    <div
-                        className="h-[800px] bg-blue-800 bg-[url(/images/gallery/cat.png)] bg-no-repeat bg-cover rounded-lg shadow-xl"
-                    >
-                    </div>
+                    <FadeIn direction="down" delay={0.5}>
+                        <div
+                            className="h-[700px] bg-[url(/images/gallery/wedding.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl"
+                        >
+                        </div>
+                    </FadeIn>                    
+                    <FadeIn direction="right" delay={0.5}>
+                        <div
+                            className="h-[800px] bg-blue-800 bg-[url(/images/gallery/cat.png)] bg-no-repeat bg-cover rounded-lg shadow-xl"
+                        />
+                    </FadeIn>
+                    
+                    
                 </div>
                 {/** Second Column */}
                 <div className="flex flex-col gap-8 w-1/3">
-                    <div
-                        className="h-[460px] bg-[url(/images/gallery/concert.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl"
-                    />
-                    <div 
-                        className="h-[460px] bg-[url(/images/gallery/party.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" 
-                    />
-                    <div 
-                        className="h-[460px] bg-[url(/images/gallery/woman.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" 
-                    />
+                    <FadeIn direction="down" delay={0.5}>
+                        <div
+                            className="h-[460px] bg-[url(/images/gallery/concert.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl"
+                        />
+                    </FadeIn>
+                    <FadeIn direction="none" delay={0.5}>
+                        <div 
+                            className="h-[460px] bg-[url(/images/gallery/party.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" 
+                        />
+                    </FadeIn>
+                    <FadeIn direction="up" delay={0.5}>
+                        <div 
+                            className="h-[460px] bg-[url(/images/gallery/woman.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" 
+                        />
+                    </FadeIn>
+                    
                 </div>
                 <div className="flex flex-col gap-8 w-1/3">
-                    <div className="h-[860px] bg-[url(/images/gallery/man.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" />
-                    <div className="h-[600px] bg-[url(/images/gallery/couple-golf.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" />
+                    <FadeIn direction="left">
+                        <div className="h-[860px] bg-[url(/images/gallery/man.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" />
+                    </FadeIn>
+                    <FadeIn direction="left">
+                        <div className="h-[600px] bg-[url(/images/gallery/couple-golf.png)] bg-no-repeat bg-cover bg-center rounded-lg shadow-xl" />
+                    </FadeIn> 
                 </div>
             </div>
             <div className="xl:hidden">
