@@ -3,12 +3,23 @@
 
 @import "tailwindcss";
 
+@theme {
+  --animate-marquee: marquee 25s linear infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0%); }
+    to { transform: translateX(-50%); }
+  }
+}
+
 :root {
     /* FONT FAMILY */
     --font-serif: 'DM Serif Display', serif;
     --font-poppins: 'Poppins', sans-serif;
     /* --font-dm-serif: 'DM serif Display', serif; */
 }
+
+
 
 html {
   scroll-behavior: smooth;
@@ -28,7 +39,25 @@ html {
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed; /* Parallax effect for extra smoothness */
+            perspective: "1200px";
         }
+            .text-gradient-flow {
+                background: linear-gradient(
+                    90deg, 
+                    #ffffff 0%, 
+                    #a3a3a3 50%, 
+                    #ffffff 100%
+                );
+                background-size: 200% auto;
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                animation: shine 6s linear infinite;
+            }
+
+            @keyframes shine {
+            to { background-position: 200% center; }
+            }
             .dm-serif {
                 font-family: var(--font-serif);
             }
@@ -42,5 +71,32 @@ html {
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
             transform: translateY(-2px);
         }
+
+
+
+@keyframes flowRight {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes flowLeft {
+    0% { background-position: 200% center; }
+    100% { background-position: 0% center; }
+  }
+  .gradient-right {
+    background: linear-gradient(90deg, #ffffff, #666666, #ffffff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flowRight 8s linear infinite;
+  }
+  .gradient-left {
+    background: linear-gradient(90deg, #ffffff, #666666, #ffffff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: flowLeft 8s linear infinite;
+  }
 
 

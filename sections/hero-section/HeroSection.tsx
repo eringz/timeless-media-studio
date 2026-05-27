@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useSpring, useTransform, useMotionValue } from "framer-motion";
 import QR from "@/sections/hero-section/QR";
+import { words } from "@/config/content";
 
 interface MagneticImageProps {
   src?: string;
@@ -16,23 +17,23 @@ interface MagneticImageProps {
   label?: string;
 }
 
-const words = [
-  'Moment', 'Memory', 'Story', 'Dream', 'Magic', 
-  'Light', 'Frame', 'Essence', 'Beauty', 'Art', 
-  'Vision', 'Soul'
-];
-
 const WordAnimation = ({ word }: { word: string }) => {
   return (
-    <span className="relative inline-block overflow-hidden h-[1.15em] align-bottom min-w-[280px] sm:min-w-[400px] lg:min-w-[500px]">
-      <AnimatePresence mode="wait">
+    <span className="relative inline-block h-[1.2em] align-bottom">
+      <span className="invisible">{word}</span>
+
+      <AnimatePresence mode="popLayout">
         <motion.div
           key={word}
-          initial={{ opacity: 0, y: 50, skewY: 7 }}
-          animate={{ opacity: 1, y: 0, skewY: 0 }}
-          exit={{ opacity: 0, y: -50, skewY: -7 }}
-          transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-          className="text-[#A3A3A3] absolute left-0 italic font-serif"
+          initial={{ opacity: 0, filter: "blur(12px) brightness(200%)", scale: 0.98 }}
+          animate={{ opacity: 1, filter: "blur(0px) brightness(100%)", scale: 1 }}
+          exit={{ opacity: 0, filter: "blur(12px) brightness(200%)", scale: 1.02 }}
+          transition={{ 
+            duration: 2.0, 
+            ease: [0.22, 0, 0.36, 1],
+            scale: { type: "spring", stiffness: 100, damping: 10 } 
+          }}
+          className="text-[#A3A3A3] italic font-serif absolute top-0 left-0"
         >
           {word}
         </motion.div>
@@ -79,8 +80,7 @@ const MagneticImage: React.FC<MagneticImageProps> = ({ src, alt, className, mous
   const baseScale = useTransform(springDistort, [0, 45], [1, 1.08]);
 
   return (
-    <div className={className} style={{ perspective: "1200px" }}>
-      {/* SVG Liquid Displacement Map Filter Generation */}
+    <div id="hero" className={`hero-section ${className}`}>
       <svg className="absolute w-0 h-0">
         <defs>
           <filter id={`liquid-glitch-${id}`}>
@@ -100,7 +100,6 @@ const MagneticImage: React.FC<MagneticImageProps> = ({ src, alt, className, mous
         }}
         className="w-full h-full cursor-pointer overflow-hidden bg-neutral-900 border border-white/10 relative p-2 group"
       >
-        {/* HUD Viewfinder Corners inside the image border */}
         <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/40 z-20 group-hover:border-white transition-colors" />
         <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/40 z-20 group-hover:border-white transition-colors" />
         <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/40 z-20 group-hover:border-white transition-colors" />
@@ -133,6 +132,22 @@ const HeroSection = () => {
   const [isQROpen, setIsQROpen] = useState(false);
   const [rawMousePosition, setRawMousePosition] = useState({ x: 0, y: 0 });
   const router = useRouter();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsQROpen(false);
+      }
+    };
+
+    if (isQROpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isQROpen]); 
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -177,28 +192,43 @@ const HeroSection = () => {
         <div className="relative w-full h-full flex items-center justify-center">
           
           {/* Main Editorial Hero Shot (Ang Nakaangla sa Itaas) */}
-          <MagneticImage 
-            id="img-hero-1" 
-            src="/images/portrait-1.jpg" 
-            alt="Editorial Shot 1" 
-            label="Alodia Gosengfiao"
-            className="absolute right-[5%] top-[12%] w-[380px] h-[840px] shadow-[0_40px_80px_-25px_rgba(0,0,0,0.9)] z-20" 
-            mouseX={rawMousePosition.x} 
-            mouseY={rawMousePosition.y} 
-            strength={0.3} 
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-[5%] top-[12%] w-[380px] h-[840px] z-20 pointer-events-none"
+          >
+            <MagneticImage 
+              id="img-hero-1" 
+              src="/images/portrait-1.jpg" 
+              alt="Editorial Shot 1" 
+              label="Alodia Gosengfiao"
+              className="w-full h-full shadow-[0_40px_80px_-25px_rgba(0,0,0,0.9)]" 
+              mouseX={rawMousePosition.x} 
+              mouseY={rawMousePosition.y} 
+              strength={0.3} 
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-[0%] bottom-[16%] w-[380px] h-[540px] z-30 pointer-events-none"
+          >
+            <MagneticImage 
+              id="img-hero-2" 
+              src="/images/portrait-2.jpg" 
+              alt="Editorial Shot 2" 
+              label="Ji-Chang Wook"
+              className="w-full h-full shadow-[0_40px_80px_-25px_rgba(0,0,0,0.9)]" 
+              mouseX={rawMousePosition.x} 
+              mouseY={rawMousePosition.y} 
+              strength={-0.4} 
+            />
+          </motion.div>
           
-          {/* Secondary Wide Cinematic Shot (Pang-balanse sa Gitna at Ibaba) */}
-          <MagneticImage 
-            id="img-hero-2" 
-            src="/images/portrait-2.jpg" 
-            alt="Editorial Shot 2" 
-            label="Ji-Chang Wook"
-            className="absolute left-[0%] bottom-[16%] w-[380px] h-[540px] shadow-[0_40px_80px_-25px_rgba(0,0,0,0.9)] z-30" 
-            mouseX={rawMousePosition.x} 
-            mouseY={rawMousePosition.y} 
-            strength={-0.4} 
-          />
+  
 
             {/* <MagneticImage 
               id="img-hero-2" 
@@ -240,6 +270,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 35 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            className="gradient-left"
           >
             Create
           </motion.div> 
@@ -248,7 +279,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 35 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.9, delay: 0.08, ease: [0.16, 1, 0.3, 1] }} 
-            className="font-light text-neutral-400 italic"
+            className="font-light text-neutral-400 italic gradient-right"
           >
             Every
           </motion.div> 
@@ -300,7 +331,7 @@ const HeroSection = () => {
               initial={{ opacity: 0, scale: 0.96 }} 
               animate={{ opacity: 1, scale: 1 }} 
               exit={{ opacity: 0, scale: 0.96 }} 
-              className="relative bg-neutral-950 border border-white/10 p-8 rounded-none max-w-sm w-full shadow-2xl flex flex-col items-center text-center z-10"
+              className="relative bg-neutral-950  border border-white/10 p-8 rounded-none max-w-md w-full shadow-2xl flex flex-col items-center text-center z-10"
             >
               <h3 className="text-2xl font-serif mb-2 text-white tracking-wide">Scan to Share</h3>
               <p className="text-xs text-neutral-400 mb-6 tracking-wider">Instantly access our digital space on your phone.</p>
