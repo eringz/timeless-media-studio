@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-import { TransitionProvider } from "@/context/TransitionContext"
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import LiveChatWidget from "@/components/LiveChatWidget";
+import { TransitionProvider } from "@/context/TransitionContext";
 
 export const metadata: Metadata = {
   title: "Timeless Media Studio",
@@ -25,13 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <TransitionProvider>
           {children}
+          <LiveChatWidget />
         </TransitionProvider>
       </body>
     </html>

@@ -1,0 +1,47 @@
+name: Build Verification
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint project
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build project
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder_key
+          NEXT_PUBLIC_PAYMONGO_PUBLIC_KEY: pk_test_placeholder
+          PAYMONGO_SECRET_KEY: sk_test_placeholder
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          EMAIL_HOST: smtp.gmail.com
+          EMAIL_PORT: 587
+          EMAIL_SECURE: false
+          EMAIL_USER: placeholder@example.com
+          EMAIL_PASS: placeholder_password
