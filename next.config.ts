@@ -19,6 +19,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  webpack: (config) => {
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: [
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/dist/**",
+        "**/.git/**",
+        "**/pagefile.sys",
+        "**/*.sys",
+      ],
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
