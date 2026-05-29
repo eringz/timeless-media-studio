@@ -27,6 +27,101 @@ const statusOptions: BookingStatus[] = [
   'cancelled',
 ];
 
+const EarningsTrendChart = ({ bookingLogs, startDate, endDate }: { bookingLogs: any[]; startDate: string; endDate: string }) => {
+  const getDailyEarnings = () => {
+    const dailyMap: { [key: string]: number } = {};
+    
+    bookingLogs
+      .filter((log) => {
+        if (log.status !== 'completed') return false;
+        if (!startDate || !endDate) return true;
+        const logDate = new Date(log.created_at);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        return logDate >= start && logDate <= end;
+      })
+      .forEach((log) => {
+        const date = new Date(log.created_at).toLocaleDateString('en-CA');
+        const price = log.package_type.includes('BASIC') ? 10 : log.package_type.includes('ELITE') ? 20 : 30;
+        dailyMap[date] = (dailyMap[date] || 0) + price;
+      });
+
+    return Object.entries(dailyMap).map(([date, earnings]) => ({ date, earnings })).sort((a, b) => a.date.localeCompare(b.date));
+  };
+
+  const dailyData = getDailyEarnings();
+  const maxEarnings = dailyData.length > 0 ? Math.max(...dailyData.map((d) => d.earnings)) : 100;
+  const svgHeight = 250;
+  const svgWidth = Math.max(600, dailyData.length * 40);
+  const padding = 40;
+  const graphHeight = svgHeight - 2 * padding;
+  const graphWidth = svgWidth - 2 * padding;
+
+  const points = dailyData.map((d, i) => {
+    const x = padding + (i / Math.max(1, dailyData.length - 1)) * graphWidth;
+    const y = svgHeight - padding - (d.earnings / maxEarnings) * graphHeight;
+    return { x, y, earnings: d.earnings, date: d.date };
+  });
+
+  const pathD =
+    points.length > 0
+      ? `M ${points.map((p) => `${p.x},${p.y}`).join(' L ')}`
+      : '';
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={svgWidth} height={svgHeight} className="min-w-full">
+        {/* Grid lines */}
+        {[0, 1, 2, 3, 4].map((i) => (
+          <line
+            key={`grid-${i}`}
+            x1={padding}
+            y1={svgHeight - padding - (i / 4) * graphHeight}
+            x2={svgWidth - padding}
+            y2={svgHeight - padding - (i / 4) * graphHeight}
+            stroke="#374151"
+            strokeDasharray="5,5"
+            strokeWidth="1"
+          />
+        ))}
+
+        {/* Axes */}
+        <line x1={padding} y1={padding} x2={padding} y2={svgHeight - padding} stroke="#9CA3AF" strokeWidth="2" />
+        <line x1={padding} y1={svgHeight - padding} x2={svgWidth - padding} y2={svgHeight - padding} stroke="#9CA3AF" strokeWidth="2" />
+
+        {/* Y-axis labels */}
+        {[0, 1, 2, 3, 4].map((i) => (
+          <text
+            key={`label-${i}`}
+            x={padding - 10}
+            y={svgHeight - padding - (i / 4) * graphHeight + 5}
+            textAnchor="end"
+            fill="#9CA3AF"
+            fontSize="12"
+          >
+            ₱{Math.round((i / 4) * maxEarnings)}
+          </text>
+        ))}
+
+        {/* Line path */}
+        {pathD && <path d={pathD} fill="none" stroke="#3B82F6" strokeWidth="3" />}
+
+        {/* Data points */}
+        {points.map((p, i) => (
+          <g key={`point-${i}`}>
+            <circle cx={p.x} cy={p.y} r="5" fill="#60A5FA" />
+            <title>{`${p.date}: ₱${p.earnings}`}</title>
+          </g>
+        ))}
+      </svg>
+      {dailyData.length === 0 && (
+        <p className="py-8 text-center text-gray-500">No earnings data available for selected period</p>
+      )}
+    </div>
+  );
+};
+
 export default function AdminPanel() {
   const router = useRouter();
 
@@ -34,6 +129,9 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<BookingStatus | 'all'>('all');
 
   const loadData = useCallback(async () => {
     try {
@@ -127,27 +225,56 @@ export default function AdminPanel() {
 
   const filteredBookingLogs = useMemo(() => {
     const q = search.toLowerCase().trim();
+    
+    let filtered = bookingLogs;
 
-    if (!q) return bookingLogs;
+    // Filter by status
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter((log) => log.status === selectedStatus);
+    }
 
-    return bookingLogs.filter(
+    // Filter by search query
+    if (!q) return filtered;
+
+    return filtered.filter(
       (log) =>
         log.confirmation_number?.toLowerCase().includes(q) ||
         log.name?.toLowerCase().includes(q) ||
         log.phone?.toLowerCase().includes(q) ||
         log.email?.toLowerCase().includes(q)
     );
-  }, [bookingLogs, search]);
+  }, [bookingLogs, search, selectedStatus]);
 
   const formatDate = (d: string) => {
     if (!d) return 'No date';
     return new Date(d).toLocaleString();
   };
 
+  const getPackagePrice = (packageType: string): number => {
+    if (packageType.includes('BASIC')) return 10;
+    if (packageType.includes('ELITE')) return 20;
+    if (packageType.includes('PREMIUM')) return 30;
+    return 0;
+  };
+
+  const calculateEarnings = (logs: BookingLog[], startDateStr?: string, endDateStr?: string): number => {
+    return logs
+      .filter((log) => {
+        if (log.status !== 'completed') return false;
+        if (!startDateStr || !endDateStr) return true;
+        const logDate = new Date(log.created_at);
+        const start = new Date(startDateStr);
+        const end = new Date(endDateStr);
+        end.setHours(23, 59, 59, 999);
+        return logDate >= start && logDate <= end;
+      })
+      .reduce((total, log) => total + getPackagePrice(log.package_type), 0);
+  };
+
   const statusLabel = (status?: BookingStatus) => {
     if (status === 'approved') return 'Approved';
     if (status === 'in_process') return 'In Process';
-    if (status === 'for_pick_up') return 'For Pick Up';
+    if (status === 'for_pick_up') return 'Sent To Drive';
     if (status === 'completed') return 'Completed';
     if (status === 'cancelled') return 'Cancelled';
     return 'Pending';
@@ -249,10 +376,9 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-black text-white">
       <div className="flex flex-col gap-4 border-b border-gray-800 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
+          <h1 className="text-2xl font-bold">Admin</h1>
           <p className="text-sm text-gray-400">
-            Supabase Booking Management
-          </p>
+Timeless Studio Booking Management          </p>
         </div>
 
         <button
@@ -271,7 +397,41 @@ export default function AdminPanel() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <p className="mb-4 text-sm font-semibold text-gray-300">📅 Filter Earnings by Date Range</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label className="mb-2 block text-xs text-gray-400">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full rounded-xl border border-gray-700 bg-black px-4 py-2 text-white outline-none focus:border-white"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-2 block text-xs text-gray-400">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full rounded-xl border border-gray-700 bg-black px-4 py-2 text-white outline-none focus:border-white"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="rounded-xl bg-gray-700 px-6 py-2 text-white transition hover:bg-gray-600"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
             <p className="text-sm text-gray-400">Total Bookings</p>
             <p className="text-3xl font-black">{bookingLogs.length}</p>
@@ -299,6 +459,32 @@ export default function AdminPanel() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-green-800 bg-green-900/20 p-4">
+            <p className="text-sm text-green-300">Total Earnings</p>
+            <p className="text-3xl font-black text-green-400">₱{calculateEarnings(bookingLogs)}</p>
+          </div>
+
+          <div className="rounded-xl border border-blue-800 bg-blue-900/20 p-4">
+            <p className="text-sm text-blue-300">Earnings (Selected Period)</p>
+            <p className="text-3xl font-black text-blue-400">
+              ₱{calculateEarnings(bookingLogs, startDate, endDate)}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-purple-800 bg-purple-900/20 p-4">
+            <p className="text-sm text-purple-300">Conversion Rate</p>
+            <p className="text-3xl font-black text-purple-400">
+              {bookingLogs.length === 0 ? '0%' : `${Math.round((bookingLogs.filter((log) => log.status === 'completed').length / bookingLogs.length) * 100)}%`}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+          <h3 className="mb-6 text-lg font-bold">📊 Earnings Trend</h3>
+          <EarningsTrendChart bookingLogs={bookingLogs} startDate={startDate} endDate={endDate} />
+        </div>
+
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
           <input
             value={search}
@@ -308,8 +494,93 @@ export default function AdminPanel() {
           />
         </div>
 
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+          <p className="mb-3 text-sm font-semibold text-gray-300">Filter by Status:</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('all')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'all'
+                  ? 'bg-white text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              All Bookings
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('pending')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'pending'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              Pending
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('approved')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'approved'
+                  ? 'bg-green-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              Approved
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('in_process')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'in_process'
+                  ? 'bg-blue-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              In Process
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('for_pick_up')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'for_pick_up'
+                  ? 'bg-purple-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              Sent To Drive
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('completed')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'completed'
+                  ? 'bg-gray-400 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              Completed
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedStatus('cancelled')}
+              className={`rounded-lg px-4 py-2 font-semibold transition ${
+                selectedStatus === 'cancelled'
+                  ? 'bg-red-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              Cancelled
+            </button>
+          </div>
+        </div>
+
         <section>
-          <h2 className="mb-4 text-xl font-semibold">Booking Requests</h2>
+          <h2 className="mb-4 text-xl font-semibold">
+            Booking Requests {selectedStatus !== 'all' && `(${filteredBookingLogs.length})`}
+          </h2>
 
           <div className="space-y-4">
             {filteredBookingLogs.length === 0 ? (
