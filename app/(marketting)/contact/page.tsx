@@ -54,17 +54,29 @@ const emptyForm: FormState = {
 
 const faqs = [
   {
-    question: "How do I track my booking?",
-    answer: "Use your confirmation number and click Track Order.",
-  },
-  {
-    question: "Can I update my booking details?",
-    answer: "Yes. Track your booking first, then click Update Details.",
-  },
-  {
-    question: "Can I cancel my booking?",
+    question: "What's included in each package?",
     answer:
-      "Yes, but only if the booking is not in process, completed, or already cancelled.",
+      "BASIC includes professional photography session. ELITE adds videography and editing. PREMIUM includes all services with premium editing and digital copies.",
+  },
+  {
+    question: "What is the turnaround time for my photos/videos?",
+    answer:
+      "Typical turnaround is 5-7 business days. Rush services available for additional fees.",
+  },
+  {
+    question: "Can I reschedule or cancel my booking?",
+    answer:
+      "Cancellations must be made at least 48 hours before your session. Rescheduling can be done through your booking tracker.",
+  },
+  {
+    question: "What file formats do you provide?",
+    answer:
+      "All deliverables are provided in high-resolution digital formats (JPEG, PNG, MP4). Physical copies available upon request.",
+  },
+  {
+    question: "Do you offer rush services?",
+    answer:
+      "Yes, we offer 24-48 hour express delivery for an additional fee. Contact us for availability.",
   },
 ];
 
@@ -557,8 +569,8 @@ export default function BookingForm() {
   return (
     <section className="min-h-screen bg-black px-4 py-24 text-white sm:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-12 grid gap-8 lg:grid-cols-2 lg:items-start">
-          <div>
+        <div className="mb-12 grid gap-8 lg:grid-cols-3 lg:items-start">
+          <div className="lg:col-span-1">
             <p className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-xs font-bold uppercase tracking-[0.25em] text-white/70">
               Book Now
             </p>
@@ -579,9 +591,32 @@ export default function BookingForm() {
             >
               Track Order
             </button>
+
+            <div className="mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_25px_80px_rgba(255,255,255,0.15)]">
+              <h3 className="px-5 pt-5 text-xl font-black transition-all duration-300 sm:text-2xl">Find Us</h3>
+
+              <div className="overflow-hidden rounded-3xl border border-white/10 m-5 transition-all duration-500">
+                <iframe
+                  title="Studio Location Map"
+                  src="https://www.google.com/maps?q=Quezon%20City%20Philippines&output=embed"
+                  className="h-[300px] w-full border-0 transition-all duration-500"
+                  loading="lazy"
+                  allowFullScreen
+                />
+              </div>
+
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Quezon+City+Philippines"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mx-5 mb-5 block rounded-2xl bg-white py-3 text-center font-black text-black transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-95"
+              >
+                Open in Google Maps
+              </a>
+            </div>
           </div>
 
-          <div className="grid gap-6 lg:h-fit">
+          <div className="grid gap-6 lg:col-span-2 lg:h-fit">
             <form
               onSubmit={openEmailDialog}
               className="rounded-[32px] border border-white/10 bg-white/[0.08] p-5 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_25px_80px_rgba(255,255,255,0.15)] sm:p-7"
@@ -675,29 +710,6 @@ export default function BookingForm() {
                   )}
                 </div>
               ))}
-            </div>
-
-            <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] p-4 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_25px_80px_rgba(255,255,255,0.15)]">
-              <h3 className="mb-4 text-xl font-black transition-all duration-300 sm:text-2xl">Find Us</h3>
-
-              <div className="overflow-hidden rounded-3xl border border-white/10 transition-all duration-500">
-                <iframe
-                  title="Studio Location Map"
-                  src="https://www.google.com/maps?q=Quezon%20City%20Philippines&output=embed"
-                  className="h-[260px] w-full border-0 transition-all duration-500 sm:h-[320px]"
-                  loading="lazy"
-                  allowFullScreen
-                />
-              </div>
-
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=Quezon+City+Philippines"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 block rounded-2xl bg-white py-3 text-center font-black text-black transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-95"
-              >
-                Open in Google Maps
-              </a>
             </div>
           </div>
         </div>
