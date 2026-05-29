@@ -1,15 +1,16 @@
 "use client";
 
-import { ReactNode } from "react";
+import { MouseEvent, ReactNode } from "react";
 import { useTransition } from "@/context/TransitionContext";
 
 interface TransitionLinkProps {
   href: string;
   children: ReactNode;
   className?: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export default function TransitionLink({ href, children, className }: TransitionLinkProps) {
+export default function TransitionLink({ href, children, className, onClick }: TransitionLinkProps) {
   const { triggerTransition } = useTransition();
 
   return (
@@ -18,6 +19,7 @@ export default function TransitionLink({ href, children, className }: Transition
       className={className}
       onClick={(e) => {
         e.preventDefault(); // Pigilan ang default browser navigation
+        onClick?.(e);
         triggerTransition(href); // Patakbuhin ang shutter bago lumipat
       }}
     >

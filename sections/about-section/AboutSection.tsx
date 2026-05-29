@@ -1,35 +1,55 @@
 import Image from "next/image";
+import FadeIn from "@/components/FadeIn";
+import { ABOUT_CONTENT } from "@/config/content";
 
 const AboutSection = () => {
+    const { title, image, paragraphs } = ABOUT_CONTENT;
+
     return (
-        <div 
-            id="about" className="about flex flex-col lg:flex-row justify-between items-center gap-6 sm:gap-8 p-4 sm:p-8 md:p-24 bg-white text-black w-full"
-        >
-            {/** About us section photo */}
-            <div className="w-full lg:w-1/2">
-                <Image 
-                    className="w-full h-auto rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
-                    src="/images/camera-shot.png"
-                    alt="camera shot image"
-                    width={1200}
-                    height={800}
-                    priority={true}
-                />
+        <section id="about" className="w-full bg-[#fbfaf7] text-neutral-900 py-20 sm:py-28 md:py-36 px-6 sm:px-12 md:px-24 flex justify-center items-center">
+            
+            <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+                <div className="w-full lg:col-span-5">
+                    <FadeIn direction="left" delay={0.1}>
+                        <div className="relative overflow-hidden rounded-sm p-3 bg-white border border-neutral-200/60 shadow-md aspect-[4/5]">
+                            <div className="relative w-full h-full overflow-hidden group">
+                                <Image 
+                                    className="w-full h-full object-cover transition-transform duration-1000 ease-out hover:scale-105 filter grayscale hover:grayscale-0 transition-all duration-700" 
+                                    src={image?.src || "/images/camera-shot.png"}
+                                    alt={image?.alt || "camera shot image"}
+                                    fill
+                                    sizes="(max-w-1024px) 100vw, 40vw"
+                                    priority={true}
+                                />
+                            </div>
+                        </div>
+                    </FadeIn>
+                </div>
+                <div className="w-full lg:col-span-7 flex flex-col gap-8 lg:pl-6">
+                    <FadeIn direction="right" delay={0.3}>
+                        <span className="text-xs font-semibold tracking-[0.3em] text-neutral-400 uppercase block mb-2">
+                            The Story Behind The Lens
+                        </span>
+                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-wide text-neutral-900 font-serif lowercase italic">
+                            {title ? title.toLowerCase() : "about us."}
+                        </h2>
+                    </FadeIn>
+
+                    <FadeIn direction="up" delay={0.5}>
+                        <div className="flex flex-col gap-6 text-neutral-600 font-serif font-light text-base sm:text-lg leading-loose max-w-xl">
+                            <p className="first-letter:text-4xl first-letter:font-normal first-letter:text-neutral-900 first-letter:mr-2 first-letter:float-left">
+                                {paragraphs?.[0]}
+                            </p>
+                            <p className="text-neutral-500 font-sans text-sm sm:text-base tracking-wide">
+                                {paragraphs?.[1]}
+                            </p>
+                        </div>
+                    </FadeIn>
+                </div>
+
             </div>
-        
-            {/** About Us short introduction */}
-            <div className="flex flex-col gap-4 sm:gap-8 w-full lg:w-1/2">
-                <h2 className="text-2xl sm:text-4xl font-bold">ABOUT US</h2>
-                <p className="text-sm sm:text-base leading-relaxed">
-                    We believe that every second holds a story worth keeping. What started as a simple passion for the lens has evolved into a dedicated mission: to freeze time for the moments that matter most..
-                </p>
-                <p className="text-sm sm:text-base leading-relaxed">
-                    From the quiet, candid smiles to the grandest celebrations of life, our goal is to capture the raw emotion and beauty of your journey. We do not just take pictures; we preserve legacies, one frame at a time.
-                </p>
-            </div>
-        </div>
+        </section>
     );
 }
 
 export default AboutSection;
-

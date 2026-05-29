@@ -34,7 +34,10 @@ export const useHeaderVisibility = () => {
         window.addEventListener("scroll", handleScroll);
         return  () => window.removeEventListener("scroll", handleScroll);
 
-    }, [])
+    }, []);
 
-    return { headerVisibility, menuOpen, setMenuOpen };
+    const toggleMenu = () => setMenuOpen((prev) => !prev);
+    const closeMenu = () => setMenuOpen(false);
+
+    return { headerVisibility, menuOpen, toggleMenu, closeMenu };
 }

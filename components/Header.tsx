@@ -15,7 +15,9 @@ const navLinks = [
 ]
 
 const Header = () => {
-  const { headerVisibility, menuOpen, setMenuOpen } = useHeaderVisibility();
+  const { headerVisibility, menuOpen, toggleMenu, closeMenu } = useHeaderVisibility();
+
+  
   return (
     <>
       <div className="flex lg:hidden">
@@ -23,7 +25,8 @@ const Header = () => {
           navLinks={navLinks}
           visibility={headerVisibility}
           menuOpen={menuOpen}
-          setMenuOpen={setMenuOpen}
+          onToggleMenu={toggleMenu}
+          onCloseMenu={closeMenu}
         />
       </div>
       <div className="hidden lg:flex">

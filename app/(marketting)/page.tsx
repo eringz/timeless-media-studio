@@ -3,7 +3,7 @@
 import HeroSection from "@/sections/hero-section/HeroSection";
 import AboutSection from "@/sections/about-section/AboutSection";
 import Services from "@/sections/services/Services";
-import Corousel from "@/sections/corousel/Corousel";
+import Corousel from "@/sections/carousel/Carousel";
 import Gallery from "@/sections/galleries/Gallery";
 
 
