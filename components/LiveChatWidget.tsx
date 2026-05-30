@@ -413,7 +413,7 @@ export default function LiveChatWidget() {
                             ? `Agent${msg.sender_name ? `: ${msg.sender_name}` : displayAgentName ? `: ${displayAgentName}` : ""}`
                             : msg.sender_type === "system"
                               ? "System"
-                              : `Client: ${msg.sender_name || name || "Client"}`}
+                              : `${msg.sender_name || name || "Client"}`}
                         </span>{" "}
                         {msg.message}
                       </p>

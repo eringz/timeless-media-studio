@@ -913,7 +913,7 @@ export default function CustomerServiceDashboard() {
                         <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${message.sender_type === "agent" ? "bg-yellow-400 text-black" : message.sender_type === "system" ? "bg-blue-500/20 text-blue-100" : "bg-black/50 text-white"}`}>
                           {message.sender_type !== "system" ? (
                             <p className="text-xs opacity-70">
-                              {message.sender_type === "agent" ? `Agent Name: ${message.sender_name || agentName}` : `Client Name: ${message.sender_name || cleanClientName(selectedConversation.customer_name)}`}
+                              {message.sender_type === "agent" ? `Agent : ${message.sender_name || agentName}` : ` ${message.sender_name || cleanClientName(selectedConversation.customer_name)}`}
                             </p>
                           ) : <p className="text-xs opacity-70">System</p>}
                           <p className="break-words">{message.message}</p>
