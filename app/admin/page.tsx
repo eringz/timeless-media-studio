@@ -20,9 +20,8 @@ type BookingLog = {
 };
 
 const statusOptions: BookingStatus[] = [
+  'pending',
   'approved',
-  'in_process',
-  'for_pick_up',
   'completed',
   'cancelled',
 ];
@@ -272,21 +271,19 @@ export default function AdminPanel() {
   };
 
   const statusLabel = (status?: BookingStatus) => {
+    if (status === 'pending') return 'Pending';
     if (status === 'approved') return 'Approved';
-    if (status === 'in_process') return 'In Process';
-    if (status === 'for_pick_up') return 'Sent To Drive';
     if (status === 'completed') return 'Completed';
     if (status === 'cancelled') return 'Cancelled';
-    return 'Pending';
+    return 'Unknown';
   };
 
   const statusClass = (status?: BookingStatus) => {
+    if (status === 'pending') return 'bg-yellow-600';
     if (status === 'approved') return 'bg-green-600';
-    if (status === 'in_process') return 'bg-blue-600';
-    if (status === 'for_pick_up') return 'bg-purple-600';
     if (status === 'completed') return 'bg-gray-600';
     if (status === 'cancelled') return 'bg-red-600';
-    return 'bg-yellow-600';
+    return 'bg-gray-600';
   };
 
   const logout = () => {
@@ -530,28 +527,8 @@ Timeless Studio Booking Management          </p>
             >
               Approved
             </button>
-            <button
-              type="button"
-              onClick={() => setSelectedStatus('in_process')}
-              className={`rounded-lg px-4 py-2 font-semibold transition ${
-                selectedStatus === 'in_process'
-                  ? 'bg-blue-500 text-black'
-                  : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
-            >
-              In Process
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedStatus('for_pick_up')}
-              className={`rounded-lg px-4 py-2 font-semibold transition ${
-                selectedStatus === 'for_pick_up'
-                  ? 'bg-purple-500 text-black'
-                  : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
-            >
-              Sent To Drive
-            </button>
+        
+          
             <button
               type="button"
               onClick={() => setSelectedStatus('completed')}

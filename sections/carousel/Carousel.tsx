@@ -30,6 +30,9 @@ const Carousel = () => {
             {items.map((item, index) => (
               <React.Fragment key={`group-1-${index}`}>
                 <span>{item}</span>
+                <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
+                  •
+                </span>
                 {/* <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
                   [0{index + 1}] •
                 </span> */}
@@ -41,6 +44,9 @@ const Carousel = () => {
             {items.map((item, index) => (
               <React.Fragment key={`group-2-${index}`}>
                 <span>{item}</span>
+                <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
+                  •
+                </span>
                 {/* <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
                   [0{index + 1}] •
                 </span> */}

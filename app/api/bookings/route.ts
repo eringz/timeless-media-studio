@@ -5,16 +5,12 @@ import { supabaseRequest } from "@/lib/supabase/server";
 type BookingStatus =
   | "pending"
   | "approved"
-  | "in_process"
-  | "for_pick_up"
   | "completed"
   | "cancelled";
 
 const allowedStatuses: BookingStatus[] = [
   "pending",
   "approved",
-  "in_process",
-  "for_pick_up",
   "completed",
   "cancelled",
 ];
@@ -120,20 +116,8 @@ export async function POST(req: Request) {
     const rowsArray = Array.isArray(rows) ? rows : [rows];
     const booking = rowsArray?.[0];
 
-    if (booking?.email) {
-      await sendBookingEmail({
-        name: booking.name,
-        email: booking.email,
-        phone: booking.phone,
-        date: booking.booking_date,
-        packageType: booking.package_type,
-        message: booking.message || undefined,
-        confirmationNumber: booking.confirmation_number,
-        status: "pending",
-      }).catch((error) => {
-        console.error("Booking confirmation email failed:", error);
-      });
-    }
+    // Email is sent via /api/send-confirmation endpoint, not here
+    // This prevents duplicate emails being sent on booking creation
 
     return NextResponse.json(normalizeBooking(booking), { status: 201 });
   } catch (error) {
@@ -204,6 +188,15 @@ export async function PATCH(req: Request) {
 
     const statusChanged = body.status && body.status !== currentBooking.status;
 
+    // Check if any details were updated (excluding status)
+    const detailsChanged =
+      (body.name !== undefined && body.name !== currentBooking.name) ||
+      (body.phone !== undefined && body.phone !== currentBooking.phone) ||
+      (body.date !== undefined && body.date !== currentBooking.booking_date) ||
+      (body.packageType !== undefined && body.packageType !== currentBooking.package_type) ||
+      (body.message !== undefined && body.message !== currentBooking.message);
+
+    // Send email if status changed
     if (
       statusChanged &&
       updatedBooking.email &&
@@ -218,9 +211,31 @@ export async function PATCH(req: Request) {
         packageType: updatedBooking.package_type,
         message: updatedBooking.message || undefined,
         confirmationNumber: updatedBooking.confirmation_number,
-        status: updatedBooking.status,
+        status: updatedBooking.status as any,
       }).catch((error) => {
         console.error("Status email failed but booking was updated:", error);
+      });
+    }
+
+    // Send update confirmation email if details were changed (but not if status is "completed" or "cancelled")
+    const normalizedStatus = updatedBooking.status;
+    if (
+      detailsChanged &&
+      updatedBooking.email &&
+      normalizedStatus !== "completed" &&
+      normalizedStatus !== "cancelled"
+    ) {
+      await sendBookingEmail({
+        name: updatedBooking.name,
+        email: updatedBooking.email,
+        phone: updatedBooking.phone,
+        date: updatedBooking.booking_date,
+        packageType: updatedBooking.package_type,
+        message: updatedBooking.message || undefined,
+        confirmationNumber: updatedBooking.confirmation_number,
+        status: "updated", // Send as update confirmation email
+      }).catch((error) => {
+        console.error("Update confirmation email failed but booking was updated:", error);
       });
     }
 

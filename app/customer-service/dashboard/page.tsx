@@ -7,8 +7,6 @@ import { supabaseBrowser } from "@/lib/supabase/browser";
 type BookingStatus =
   | "pending"
   | "approved"
-  | "in_process"
-  | "for_pick_up"
   | "completed"
   | "cancelled";
 
@@ -58,8 +56,6 @@ type AiSummary = {
 const statusOptions: BookingStatus[] = [
   "pending",
   "approved",
-  "in_process",
-  "for_pick_up",
   "completed",
   "cancelled",
 ];
@@ -707,7 +703,7 @@ export default function CustomerServiceDashboard() {
 
   async function cancelBooking() {
     if (!selectedBooking) return;
-    if (selectedBooking.status === "completed" || selectedBooking.status === "in_process") {
+    if (selectedBooking.status === "completed" || selectedBooking.status === "cancelled") {
       alert("This booking can no longer be cancelled.");
       return;
     }
@@ -1081,7 +1077,7 @@ function BookingTracker(props: {
               <div className="mt-6 grid gap-3">
                 <button onClick={() => props.setIsEditing(true)} className="rounded-2xl border border-white/10 px-5 py-3 font-semibold transition hover:border-yellow-400">Update Booking</button>
                 <button onClick={() => void props.approveBooking()} disabled={props.saving || props.selectedBooking.status === "approved"} className="rounded-2xl bg-green-500 px-5 py-3 font-semibold text-white transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50">Approve Booking</button>
-                <button onClick={() => void props.cancelBooking()} disabled={props.saving || props.selectedBooking.status === "cancelled" || props.selectedBooking.status === "completed" || props.selectedBooking.status === "in_process"} className="rounded-2xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-400">Cancel Booking</button>
+                <button onClick={() => void props.cancelBooking()} disabled={props.saving || props.selectedBooking.status === "cancelled" || props.selectedBooking.status === "completed"} className="rounded-2xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-400">Cancel Booking</button>
               </div>
             ) : (
               <div className="mt-6 space-y-4">
