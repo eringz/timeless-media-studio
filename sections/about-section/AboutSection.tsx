@@ -30,8 +30,8 @@ const AboutSection = () => {
                         <span className="text-xs font-semibold tracking-[0.3em] text-neutral-400 uppercase block mb-2">
                             The Story Behind The Lens
                         </span>
-                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-wide text-neutral-900 font-serif lowercase italic">
-                            {title ? title.toLowerCase() : "about us."}
+                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-wide text-neutral-900 font-serif italic">
+                            About us
                         </h2>
                     </FadeIn>
 
