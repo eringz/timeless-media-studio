@@ -360,7 +360,7 @@ export default function LiveChatWidget() {
               />
 
               <div>
-                <p className="mb-2 text-sm font-semibold text-zinc-800">Choose client need / help</p>
+                <p className="mb-2 text-sm font-semibold text-zinc-800">Customer Intent : </p>
                 <div className="grid grid-cols-2 gap-2">
                   {clientNeeds.map((need) => (
                     <button

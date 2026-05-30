@@ -83,17 +83,17 @@ function uniqueMessages(messages: ChatMessage[]) {
 
 function getNeedFromMessages(messages: ChatMessage[]) {
   const needMessage = messages.find((message) =>
-    message.message.startsWith("Client need/help:")
+    message.message.startsWith("Customer Intent : ")
   );
 
-  return needMessage?.message.replace("Client need/help:", "").trim() || "Live Agent";
+  return needMessage?.message.replace("Customer Intent : ", "").trim() || "Live Agent";
 }
 
 function summarizeText(items: string[], fallback: string) {
   const cleanItems = items
     .map((item) => item.trim())
     .filter(Boolean)
-    .filter((item) => !item.startsWith("Client need/help:"));
+    .filter((item) => !item.startsWith("Customer Intent : "));
 
   if (cleanItems.length === 0) return fallback;
 
