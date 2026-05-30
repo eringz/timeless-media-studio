@@ -82,6 +82,12 @@ const Gallery = () => {
       <AnimatePresence>
         {selectedPhoto && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            <button 
+              onClick={() => setSelectedPhoto(null)} 
+              className="absolute top-4 right-4 z-50 font-mono text-lg text-neutral-400 bg-transparent hover:text-white hover:bg-black/50 w-16 h-16 flex items-center justify-center rounded-full uppercase transition-colors"
+            >
+              X
+            </button>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -93,12 +99,12 @@ const Gallery = () => {
               layoutId={`photo-${selectedPhoto.id}`}
               className="relative w-full max-w-5xl bg-[#fbfaf7] border border-neutral-200 flex flex-col md:flex-row p-2 z-10 overflow-hidden shadow-2xl"
             >
-              <button 
+              {/* <button 
                 onClick={() => setSelectedPhoto(null)}
                 className="absolute top-4 right-4 z-50 font-mono text-[9px] tracking-widest text-neutral-400 hover:text-black border border-neutral-200 px-3 py-1.5 uppercase bg-white/50 backdrop-blur"
               >
                 Close [x]
-              </button>
+              </button> */}
 
               <div className="relative w-full md:w-[65%] h-[40vh] md:h-[70vh] bg-neutral-100">
                 <Image src={selectedPhoto.src} alt={selectedPhoto.alt} fill className="object-contain p-6" />
@@ -106,7 +112,7 @@ const Gallery = () => {
 
               <div className="flex-1 p-8 flex flex-col justify-between font-mono">
                 <div>
-                  <span className="text-[10px] text-neutral-400">{selectedPhoto.id}</span>
+                  {/* <span className="text-[10px] text-neutral-400">{selectedPhoto.id}</span> */}
                   <h2 className="text-xl font-bold uppercase mt-2">{selectedPhoto.alt}</h2>
                   <div className="mt-8 space-y-4 text-[10px] text-neutral-600">
                     <p>FOCAL: {selectedPhoto.dimensions}</p>

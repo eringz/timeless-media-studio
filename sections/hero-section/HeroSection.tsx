@@ -188,7 +188,6 @@ const HeroSection = () => {
       </div>
 
       {/* ================= GRID-ALIGNED BENTO COMPOSITION ================= */}
-      {/* Ginawa nating grid-ready container para hawakan ang visual elements sa kanan nang maayos */}
       <div className="hidden lg:block absolute inset-y-0 right-[6%] w-[45%] z-10 pointer-events-none">
         <div className="relative w-full h-full flex items-center justify-center">
           
