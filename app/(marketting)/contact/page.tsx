@@ -564,149 +564,243 @@ export default function BookingForm() {
   };
 
   return (
-    <section className="min-h-screen bg-black px-4 py-24 text-white sm:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-12 grid gap-8 lg:grid-cols-3 lg:items-start">
-          <div className="lg:col-span-1">
-            <p className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-xs font-bold uppercase tracking-[0.25em] text-white/70">
-              Book Now
-            </p>
-
-            <h1 className="text-5xl font-black leading-tight sm:text-7xl">
-              Make your
-              <span className="block text-white/60">memories</span>
-              documented
-              <span className="block text-white/60">with us.</span>
-            </h1>
-
-        
-
-            <button
-              type="button"
-              onClick={openTrackerModal}
-              className="mt-8 rounded-2xl border border-white/15 bg-white px-6 py-3 font-black uppercase tracking-[0.15em] text-black transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-95"
-            >
-              Track Order
-            </button>
-
-            <div className="mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_25px_80px_rgba(255,255,255,0.15)]">
-              <h3 className="px-5 pt-5 text-xl font-black transition-all duration-300 sm:text-2xl">Find Us</h3>
-
-              <div className="overflow-hidden rounded-3xl border border-white/10 m-5 transition-all duration-500">
-                <iframe
-                  title="Studio Location Map"
-                  src="https://www.google.com/maps?q=Quezon%20City%20Philippines&output=embed"
-                  className="h-[300px] w-full border-0 transition-all duration-500"
-                  loading="lazy"
-                  allowFullScreen
-                />
+    <section className="min-h-screen bg-black text-white">
+      <div className="px-4 sm:px-8" style={{ marginTop: '5.5rem' }}>
+        <div className="mx-auto max-w-6xl py-12 sm:py-16">
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* LEFT COLUMN: Heading & Contact Info */}
+            <div className="lg:col-span-1 space-y-8">
+              {/* Heading */}
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-3">
+                  Book Now!
+                </p>
+                <h1 className="text-4xl sm:text-5xl font-black leading-tight">
+                  Make your
+                  <span className="block text-white/60">memories</span>
+                  Documented
+                  <span className="block text-white/60">with us.</span>
+                </h1>
               </div>
 
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=Quezon+City+Philippines"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mx-5 mb-5 block rounded-2xl bg-white py-3 text-center font-black text-black transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] active:scale-95"
+              {/* Contact Info Box - Matched Height */}
+              <div className="border border-white/20 p-6 flex flex-col h-fit">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-3">
+                    Contact
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="text-white/70">Phone:</span></p>
+                    <p className="font-semibold">+63 (9xxx-xxxx)</p>
+                    <p className="font-semibold">+63 (9xxx-xxxx)</p>
+                    <p className="mt-3"><span className="text-white/70">Hours:</span></p>
+                    <p className="font-semibold text-sm">Mon - Fri, 9 AM - 6 PM</p>
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="pt-4 border-t border-white/10 mt-auto">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-3">
+                    Follow
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href="https://facebook.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 border border-white/30 text-xs font-bold hover:bg-white hover:text-black transition-all duration-300"
+                      title="Facebook"
+                    >
+                      F
+                    </a>
+                    <a
+                      href="https://instagram.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 border border-white/30 text-xs font-bold hover:bg-white hover:text-black transition-all duration-300"
+                      title="Instagram"
+                    >
+                      IG
+                    </a>
+                    <a
+                      href="https://twitter.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 border border-white/30 text-xs font-bold hover:bg-white hover:text-black transition-all duration-300"
+                      title="Twitter"
+                    >
+                      X
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* MIDDLE COLUMN: Booking Form */}
+            <div className="lg:col-span-1">
+              <div className="border border-white/20 p-6 sm:p-8 h-fit">
+                <h2 className="text-lg sm:text-xl font-bold mb-6 uppercase tracking-widest">
+                  Book Your Session
+                </h2>
+
+                <form
+                  onSubmit={openEmailDialog}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                      placeholder="John Doe"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 text-white text-sm placeholder-white/40 outline-none hover:border-white/40 focus:border-white/60 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      value={dialogEmail}
+                      onChange={(e) => handleEmailChange(e.target.value)}
+                      placeholder="your@email.com"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 text-white text-sm placeholder-white/40 outline-none hover:border-white/40 focus:border-white/60 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
+                      Phone Number *
+                    </label>
+                    <input
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleChange}
+                      required
+                      placeholder="+63 (9xxx-xxxx)"
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 text-white text-sm placeholder-white/40 outline-none hover:border-white/40 focus:border-white/60 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
+                      Preferred Date *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowCalendar(true)}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 text-white text-sm text-left hover:border-white/40 focus:border-white/60 transition-colors"
+                    >
+                      {form.date
+                        ? new Date(form.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "Select a date"}
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
+                      Package Type *
+                    </label>
+                    <select
+                      name="packageType"
+                      value={form.packageType}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 text-white text-sm outline-none hover:border-white/40 focus:border-white/60 transition-colors"
+                    >
+                      <option value="" className="bg-black">Choose a package</option>
+                      <option value="BASIC PACKAGE - ₱10" className="bg-black">BASIC - ₱10</option>
+                      <option value="ELITE PACKAGE - ₱20" className="bg-black">ELITE - ₱20</option>
+                      <option value="PREMIUM PACKAGE - ₱30" className="bg-black">PREMIUM - ₱30</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-widest text-white/80 mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      name="message"
+                      value={form.message}
+                      onChange={handleChange}
+                      placeholder="Tell us about your vision..."
+                      className="w-full px-4 py-3 bg-white/5 border border-white/20 text-white text-sm placeholder-white/40 outline-none hover:border-white/40 focus:border-white/60 transition-colors resize-none h-24"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full px-4 py-3 bg-white text-black font-bold text-sm uppercase tracking-widest hover:bg-white/90 active:scale-95 transition-all duration-300 mt-6"
+                  >
+                    Submit Booking
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: FAQ */}
+            <div className="lg:col-span-1 flex flex-col h-fit">
+              <div className="border border-white/20 p-6 sm:p-8">
+                <h2 className="text-lg sm:text-xl font-bold mb-6 uppercase tracking-widest">
+                  FAQs
+                </h2>
+
+                <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                  {faqs.slice(0, 4).map((faq, index) => (
+                    <div key={faq.question} className="border-b border-white/10 pb-3 last:border-b-0">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                        className="flex w-full items-center justify-between gap-2 text-left hover:text-white/80 transition-colors py-2"
+                      >
+                        <span className="font-semibold text-sm leading-tight pr-2">{faq.question}</span>
+                        <span className="text-lg flex-shrink-0 font-light">{openFaq === index ? "−" : "+"}</span>
+                      </button>
+
+                      {openFaq === index && (
+                        <p className="text-xs leading-relaxed text-white/70 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                          {faq.answer}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Track Order Button */}
+              <button
+                type="button"
+                onClick={openTrackerModal}
+                className="w-full px-6 py-4 bg-white/10 border border-white/30 text-white font-bold uppercase text-sm tracking-widest hover:bg-white/20 hover:border-white/50 transition-all duration-300 mt-4"
               >
-                Open in Google Maps
-              </a>
+                Track Your Order
+              </button>
             </div>
           </div>
 
-          <div className="grid gap-6 lg:col-span-2 lg:h-fit">
-            <form
-              onSubmit={openEmailDialog}
-              className="rounded-[32px] border border-white/10 bg-white/[0.08] p-5 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_25px_80px_rgba(255,255,255,0.15)] sm:p-7"
-            >
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Name"
-                required
-                className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm font-semibold text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20 hover:border-white/30"
+          {/* Map Section - Below FAQ */}
+          <div className="mt-12 pt-12 border-t border-white/20">
+            <div className="border border-white/20 overflow-hidden h-96">
+              <iframe
+                title="Studio Location Map"
+                src="https://www.google.com/maps?q=Quezon%20City%20Philippines&output=embed"
+                className="w-full h-full border-0"
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
               />
-
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="Phone Number"
-                required
-                className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm font-semibold text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20 hover:border-white/30"
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowCalendar(true)}
-                className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-left text-sm font-semibold text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20 hover:border-white/30"
-              >
-                {form.date
-                  ? new Date(form.date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "Book your schedule!"}
-              </button>
-
-              <select
-                name="packageType"
-                value={form.packageType}
-                onChange={handleChange}
-                required
-                className="mb-4 h-12 w-full rounded-2xl border border-white/10 bg-white/90 px-4 text-sm font-semibold text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20 hover:border-white/30"
-              >
-                <option value="">Choose your Package</option>
-                <option value="BASIC PACKAGE - ₱10">BASIC PACKAGE - ₱10</option>
-                <option value="ELITE PACKAGE - ₱20">ELITE PACKAGE - ₱20</option>
-                <option value="PREMIUM PACKAGE - ₱30">
-                  PREMIUM PACKAGE - ₱30
-                </option>
-              </select>
-
-              <textarea
-                name="message"
-                value={form.message}
-                onChange={handleChange}
-                placeholder="Message"
-                className="h-32 w-full resize-none rounded-2xl border border-white/10 bg-white/90 p-4 text-sm font-semibold text-black outline-none transition-all duration-300 focus:border-white focus:bg-white focus:ring-4 focus:ring-white/20 hover:border-white/30"
-              />
-
-              <button
-                type="submit"
-                className="group relative mt-7 w-full overflow-hidden rounded-2xl bg-white py-4 font-black uppercase tracking-[0.18em] text-black shadow-[0_16px_45px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.96]"
-              >
-                <span className="relative flex items-center justify-center gap-3">
-                  Submit Booking <span>→</span>
-                </span>
-              </button>
-            </form>
-
-            <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.08] p-5 shadow-[0_25px_80px_rgba(255,255,255,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_25px_80px_rgba(255,255,255,0.15)]">
-              <h3 className="px-0 py-0 text-xl font-black transition-all duration-300">
-                Frequently Asked Questions
-              </h3>
-
-              {faqs.map((faq, index) => (
-                <div key={faq.question} className="border-t border-white/10 transition-all duration-300">
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                    className="flex w-full items-center justify-between gap-4 p-4 text-left transition-all duration-300 hover:bg-white/5"
-                  >
-                    <span className="font-bold transition-all duration-300">{faq.question}</span>
-                    <span className="transition-transform duration-300">{openFaq === index ? "−" : "+"}</span>
-                  </button>
-
-                  {openFaq === index && (
-                    <p className="animate-in fade-in slide-in-from-top-2 px-4 pb-4 text-sm leading-7 text-white/60 duration-300">
-                      {faq.answer}
-                    </p>
-                  )}
-                </div>
-              ))}
             </div>
           </div>
         </div>
