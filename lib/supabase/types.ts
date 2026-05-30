@@ -1,8 +1,6 @@
 export type BookingStatus =
   | "pending"
   | "approved"
-  | "in_process"
-  | "for_pick_up"
   | "completed"
   | "cancelled"
   

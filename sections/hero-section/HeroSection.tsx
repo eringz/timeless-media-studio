@@ -33,7 +33,8 @@ const WordAnimation = ({ word }: { word: string }) => {
             ease: [0.22, 0, 0.36, 1],
             scale: { type: "spring", stiffness: 100, damping: 10 } 
           }}
-          className="text-[#A3A3A3] italic font-serif absolute top-0 left-0"
+          className="text-[#A3A3A3] italic font-serif absolute top-0 left-0 "
+          // className="text-[#A3A3A3] italic font-serif absolute top-0 left-0  gradient-right"
         >
           {word}
         </motion.div>

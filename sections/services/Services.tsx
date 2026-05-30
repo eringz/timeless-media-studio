@@ -1,168 +1,118 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Image from "next/image";
+import { SERVICES } from "@/config/content";
 
-const services = [
-  {
-    title: "VIDEOGRAPHY",
-    image:
-      "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1600&auto=format&fit=crop",
+// Animation Variants
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
-  {
-    title: "PHOTOGRAPHY",
-    image:
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1600&auto=format&fit=crop",
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 3.7, ease: [0.22, 1, 0.36, 1] as const },
   },
-  {
-    title: "EVENT COVERAGE",
-    image:
-      "https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    title: "PORTRAIT",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    title: "PRE-WEDDING AND ENGAGEMENT SHOOT",
-    image:
-      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    title: "EDITING",
-    image:
-      "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop",
-  },
-];
+};
 
 const Services = () => {
-  const [selectedService, setSelectedService] = useState<{
-    title: string;
-    image: string;
-  } | null>(null);
+  const [selectedService, setSelectedService] = useState<typeof SERVICES[0] | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // ESC Key listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedService(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
-    <div
-      id="services"
-      className="services flex flex-col gap-6 sm:gap-8 p-4 sm:p-8 md:p-24 bg-gray-50 w-full h-full"
-    >
-      <SectionHeading title="Services" />
+    <div id="services" className="services flex flex-col gap-12 p-6 sm:p-12 md:p-24 bg-[#fbfaf7] text-black w-full relative overflow-hidden">
+      
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#00000004_1px,transparent_1px),linear-gradient(to_bottom,#00000004_1px,transparent_1px)] bg-[size:30px_30px] pointer-events-none" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10 lg:px-24">
-        {services.map((service, index) => (
-          <button
-            key={index}
-            onClick={() => setSelectedService(service)}
-            className="group relative overflow-hidden rounded-3xl shadow-xl h-[350px] hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-          >
-            <Image
-              src={service.image}
-              alt={service.title}
-              fill
-              className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-50"
-            />
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-            <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
-              <h2 className="text-white text-2xl font-extrabold tracking-wide leading-tight drop-shadow-lg">
-                {service.title}
-              </h2>
-
-              <p className="text-gray-200 mt-2 text-sm opacity-0 group-hover:opacity-100 transition-all duration-500">
-                Professional and cinematic quality service for unforgettable
-                moments.
-              </p>
-            </div>
-          </button>
-        ))}
+      <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between border-b border-neutral-900/10 pb-6 gap-4">
+        <SectionHeading title="Services" />
+        <span className="font-mono text-[10px] text-neutral-400 tracking-[0.2em] uppercase">[ SYS_CAPABILITIES_LOG // ACTIVE_MODULES ]</span>
       </div>
 
-      {selectedService && (
-        <div className="fixed inset-0 z-[999] bg-black/50 backdrop-blur-xl flex items-center justify-center p-4 animate-fadeIn">
-          <button
-            onClick={() => setSelectedService(null)}
-            className="absolute top-6 right-6 bg-white text-black w-12 h-12 rounded-full text-2xl font-bold shadow-xl hover:bg-red-600 hover:text-white transition-all duration-300 z-50"
-          >
-            ✕
-          </button>
-
-          <div className="relative w-full max-w-6xl animate-zoomIn">
-            <div className="relative w-full h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
-              <Image
-                src={selectedService.image}
-                alt={selectedService.title}
-                fill
-                className="object-cover"
-                priority
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 relative z-10"
+      >
+        {SERVICES.map((service, index) => (
+          <motion.div key={index} variants={cardVariants}>
+            <button
+              onClick={() => setSelectedService(service)}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              className="group relative overflow-hidden border border-neutral-900/10 bg-white p-2 h-[380px] w-full flex flex-col text-left transition-all duration-500 hover:border-neutral-900"
+            >
+              <motion.div 
+                className="absolute top-0 left-0 h-[2px] bg-neutral-900"
+                initial={{ width: 0 }}
+                animate={{ width: hoveredIndex === index ? "100%" : "0%" }}
+                transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
               />
 
-              <div className="absolute inset-0 bg-black/40" />
-
-              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12">
-                <h1 className="text-white text-4xl md:text-6xl font-black leading-tight drop-shadow-2xl">
-                  {selectedService.title}
-                </h1>
-
-                <p className="text-gray-200 mt-4 max-w-2xl text-lg md:text-xl">
-                  High-quality creative visuals with professional editing,
-                  storytelling, and cinematic production.
-                </p>
+              <div className="relative w-full h-[65%] overflow-hidden bg-neutral-900">
+                <Image src={service.image} alt={service.title} fill className="object-cover grayscale hover:grayscale-0 transition-all duration-700" />
+                <div className="absolute bottom-2 left-2 font-mono text-[9px] text-white/50 bg-black/70 px-1.5 py-0.5">{service.tag}</div>
               </div>
-            </div>
+
+              <div className="flex-1 flex flex-col justify-between pt-4 px-2 pb-2">
+                <h2 className="text-xl font-bold uppercase tracking-tight">{service.title}</h2>
+                <p className="text-neutral-500 text-[11px] font-mono line-clamp-2">{service.desc}</p>
+              </div>
+            </button>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <AnimatePresence>
+        {selectedService && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSelectedService(null)} 
+              className="absolute inset-0 bg-black/90 backdrop-blur-md" 
+            />
+            <motion.div 
+              layoutId={`service-${selectedService.id}`}
+              className="relative bg-neutral-950 w-full max-w-4xl h-[70vh] flex flex-col md:flex-row overflow-hidden shadow-2xl p-2 z-10 text-white"
+            >
+              <button onClick={() => setSelectedService(null)} className="absolute top-4 right-4 z-50 font-mono text-[11px] text-neutral-400 hover:text-white bg-black/50 px-3 py-1 uppercase">[ Esc / Close ]</button>
+              
+              <div className="relative w-full md:w-[55%] h-[40vh] md:h-full bg-neutral-900">
+                <Image src={selectedService.image} alt={selectedService.title} fill className="object-cover opacity-80" />
+              </div>
+
+              <div className="flex-1 p-8 md:p-12 flex flex-col justify-between font-sans">
+                <div className="space-y-6">
+                  <span className="font-mono text-xs text-white/40">INDEX_{selectedService.id}</span>
+                  <h1 className="text-4xl font-bold uppercase">{selectedService.title}</h1>
+                  <p className="text-neutral-400 text-sm leading-relaxed">{selectedService.desc}</p>
+                </div>
+                <div className="font-mono text-[10px] text-neutral-500 animate-pulse">● CORE_STABLE</div>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-
-
-      <style jsx>{`
-        .marquee {
-          width: max-content;
-          animation: marquee 18s linear infinite;
-        }
-
-        @keyframes marquee {
-          from {
-            transform: translateX(0);
-          }
-
-          to {
-            transform: translateX(-50%);
-          }
-        }
-
-        @keyframes zoomIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .animate-zoomIn {
-          animation: zoomIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-
-          to {
-            opacity: 1;
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-      `}</style>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

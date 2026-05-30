@@ -20,8 +20,6 @@ type FormState = {
 type BookingStatus =
   | "pending"
   | "approved"
-  | "in_process"
-  | "for_pick_up"
   | "completed"
   | "cancelled";
 
@@ -146,7 +144,6 @@ export default function BookingForm() {
 
   const isCancelDisabled = (status?: BookingStatus) => {
     return (
-      status === "in_process" ||
       status === "completed" ||
       status === "cancelled"
     );
