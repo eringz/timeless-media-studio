@@ -100,13 +100,11 @@ const Gallery = () => {
               className="relative w-full max-w-5xl bg-[#fbfaf7] border border-neutral-200 flex flex-col md:flex-row p-2 z-10 overflow-hidden shadow-2xl"
             >
               <button 
-              {/* <button 
                 onClick={() => setSelectedPhoto(null)}
                 className="absolute top-4 right-4 z-50 font-mono text-[9px] tracking-widest text-neutral-400 hover:text-black border border-neutral-200 px-3 py-1.5 uppercase bg-white/50 backdrop-blur"
               >
                 Close [x]
               </button>
-              </button> */}
 
               <div className="relative w-full md:w-[65%] h-[40vh] md:h-[70vh] bg-neutral-100">
                 <Image src={selectedPhoto.src} alt={selectedPhoto.alt} fill className="object-contain p-6" />

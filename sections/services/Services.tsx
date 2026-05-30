@@ -116,11 +116,6 @@ const Services = () => {
                   <p className="text-neutral-400 text-sm leading-relaxed">{selectedService.desc}</p>
                 </div>
                 <div className="font-mono text-[10px] text-neutral-500 animate-pulse">● CORE_STABLE</div>
-                  {/* <span className="font-mono text-xs text-white/40">INDEX_{selectedService.id}</span> */}
-                  <h1 className="text-4xl font-bold uppercase">{selectedService.title}</h1>
-                  <p className="text-neutral-400 text-sm leading-relaxed">{selectedService.desc}</p>
-                </div>
-                {/* <div className="font-mono text-[10px] text-neutral-500 animate-pulse">● CORE_STABLE</div> */}
               </div>
             </motion.div>
           </div>

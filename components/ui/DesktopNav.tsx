@@ -19,8 +19,6 @@ const DesktopNav = ({ navLinks, visibility }: DesktopNavProps) => {
       } bg-black/50 backdrop-blur-md border-b border-white/5`} 
     >
       <div className="flex items-center justify-between px-6 py-4 sm:px-12 w-full">
-        {/* Logo sa Kaliwa */}
-      <div className="flex items-center justify-between px-6 sm:px-12 w-full">
         <TimelessLogo />
 
         <div className="flex items-center gap-4 sm:gap-6">
@@ -29,7 +27,6 @@ const DesktopNav = ({ navLinks, visibility }: DesktopNavProps) => {
               key={link.name}
               href={link.href}
               className="dm-serif px-4 py-2 sm:px-6 rounded text-xl lg:text-2xl whitespace-nowrap text-shadow-md text-shadow-sky-300/40 tracking-widest hover:text-white/60 transition-colors duration-500"
-              className="dm-serif px-4 sm:px-6 rounded text-xl lg:text-2xl whitespace-nowrap text-shadow-md text-shadow-sky-300/40 tracking-widest hover:text-white/60 transition-colors duration-500"
             >
               {link.name}
             </TransitionLink>
