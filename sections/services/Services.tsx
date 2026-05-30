@@ -44,7 +44,7 @@ const Services = () => {
 
       <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between border-b border-neutral-900/10 pb-6 gap-4">
         <SectionHeading title="Services" />
-        <span className="font-mono text-[10px] text-neutral-400 tracking-[0.2em] uppercase">[ SYS_CAPABILITIES_LOG // ACTIVE_MODULES ]</span>
+        {/* <span className="font-mono text-[10px] text-neutral-400 tracking-[0.2em] uppercase">[ SYS_CAPABILITIES_LOG // ACTIVE_MODULES ]</span> */}
       </div>
 
       <motion.div 
@@ -86,6 +86,12 @@ const Services = () => {
       <AnimatePresence>
         {selectedService && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+            <button 
+              onClick={() => setSelectedService(null)} 
+              className="absolute top-4 right-4 z-50 font-mono text-lg text-neutral-400 bg-transparent hover:text-white hover:bg-black/50 w-16 h-16 flex items-center justify-center rounded-full uppercase transition-colors"
+            >
+              X
+            </button>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setSelectedService(null)} 
@@ -95,7 +101,7 @@ const Services = () => {
               layoutId={`service-${selectedService.id}`}
               className="relative bg-neutral-950 w-full max-w-4xl h-[70vh] flex flex-col md:flex-row overflow-hidden shadow-2xl p-2 z-10 text-white"
             >
-              <button onClick={() => setSelectedService(null)} className="absolute top-4 right-4 z-50 font-mono text-[11px] text-neutral-400 hover:text-white bg-black/50 px-3 py-1 uppercase">[ Esc / Close ]</button>
+              
               
               <div className="relative w-full md:w-[55%] h-[40vh] md:h-full bg-neutral-900">
                 <Image src={selectedService.image} alt={selectedService.title} fill className="object-cover opacity-80" />
@@ -103,11 +109,11 @@ const Services = () => {
 
               <div className="flex-1 p-8 md:p-12 flex flex-col justify-between font-sans">
                 <div className="space-y-6">
-                  <span className="font-mono text-xs text-white/40">INDEX_{selectedService.id}</span>
+                  {/* <span className="font-mono text-xs text-white/40">INDEX_{selectedService.id}</span> */}
                   <h1 className="text-4xl font-bold uppercase">{selectedService.title}</h1>
                   <p className="text-neutral-400 text-sm leading-relaxed">{selectedService.desc}</p>
                 </div>
-                <div className="font-mono text-[10px] text-neutral-500 animate-pulse">● CORE_STABLE</div>
+                {/* <div className="font-mono text-[10px] text-neutral-500 animate-pulse">● CORE_STABLE</div> */}
               </div>
             </motion.div>
           </div>
