@@ -18,9 +18,9 @@ export default function TransitionLink({ href, children, className, onClick }: T
       href={href}
       className={className}
       onClick={(e) => {
-        e.preventDefault(); // Pigilan ang default browser navigation
+        e.preventDefault(); 
         onClick?.(e);
-        triggerTransition(href); // Patakbuhin ang shutter bago lumipat
+        triggerTransition(href); 
       }}
     >
       {children}
