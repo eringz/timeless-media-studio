@@ -39,6 +39,7 @@ const Footer = () => {
           </div>
 
           <div className="flex flex-wrap md:flex-nowrap gap-6 w-full md:w-auto justify-start md:justify-end">
+          {/* <div className="flex flex-wrap md:flex-nowrap gap-6 w-full md:w-auto justify-start md:justify-end">
             {catalogSpecs.map((spec, index) => (
               <div key={index} className="border-l border-neutral-300 pl-4 pr-8 py-1 flex flex-col justify-between">
                 <span className="font-mono text-[9px] tracking-widest text-neutral-400 block mb-1">{spec.label}</span>
@@ -46,6 +47,7 @@ const Footer = () => {
               </div>
             ))}
           </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pt-8 border-t border-neutral-950/5 text-[10px] font-mono tracking-widest text-neutral-400 uppercase">
@@ -56,6 +58,7 @@ const Footer = () => {
           </div>
           
           <div>
+          {/* <div>
             <motion.a 
               href="#hero" 
               whileHover={{ x: 5 }}
@@ -64,6 +67,7 @@ const Footer = () => {
               [ Index Top ↑ ]
             </motion.a>
           </div>
+          </div> */}
         </div>
       </div>
     </motion.footer>

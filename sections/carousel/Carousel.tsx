@@ -19,6 +19,9 @@ const Carousel = () => {
         
         {/* Subtle Lens Viewfinder Dots on Edges */}
         <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse z-20" />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[9px] text-white/30 tracking-widest z-20 hidden md:block">
+          [ LIVE_TICKER_SYS ]
+        </div>
 
         <div className="flex whitespace-nowrap animate-marquee hover:[animation-play-state:paused] cursor-pointer pl-8 md:pl-12">
           
@@ -30,6 +33,9 @@ const Carousel = () => {
                 <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
                   •
                 </span>
+                {/* <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
+                  [0{index + 1}] •
+                </span> */}
               </React.Fragment>
             ))}
           </div>
@@ -41,6 +47,9 @@ const Carousel = () => {
                 <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
                   •
                 </span>
+                {/* <span className="font-mono text-neutral-600 font-normal text-sm sm:text-base px-2">
+                  [0{index + 1}] •
+                </span> */}
               </React.Fragment>
             ))}
           </div>
