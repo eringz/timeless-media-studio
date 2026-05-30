@@ -121,7 +121,7 @@ export async function sendBookingEmail(booking: BookingEmailPayload) {
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:640px;margin:auto;background:#f5f5f5;">
         <!-- Header -->
-        <div style="background:#3a3a3a;color:#fff;padding:40px 20px;text-align:center;">
+        <div style="background:#4D4D4D;color:#4D4D4D;padding:40px 20px;text-align:center;">
           <img src="https://timeless.dreamplanfix.com/images/logo-banner.png" alt="Timeless Media Studio" style="max-width:100%;height:auto;max-height:120px;margin-bottom:15px;">
           <p style="margin:15px 0 0 0;font-size:14px;opacity:0.9;">Booking Confirmation : ${booking.confirmationNumber}</p>
         </div>
