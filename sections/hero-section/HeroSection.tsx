@@ -81,7 +81,7 @@ const MagneticImage: React.FC<MagneticImageProps> = ({ src, alt, className, mous
   const baseScale = useTransform(springDistort, [0, 45], [1, 1.08]);
 
   return (
-    <div id="hero" className={`hero-section ${className}`}>
+    <div id={id} className={`relative ${className}`}>
       <svg className="absolute w-0 h-0">
         <defs>
           <filter id={`liquid-glitch-${id}`}>
@@ -188,15 +188,15 @@ const HeroSection = () => {
       </div>
 
       {/* ================= GRID-ALIGNED BENTO COMPOSITION ================= */}
-      <div className="hidden lg:block absolute inset-y-0 right-[6%] w-[45%] z-10 pointer-events-none">
-        <div className="relative w-full h-full flex items-center justify-center">
+      <div className="hidden lg:grid absolute inset-y-0 right-[6%] w-[55%] xl:w-[52%] 2xl:w-[48%] max-w-[1040px] z-10 pointer-events-none">
+        <div className="relative w-full h-full grid grid-cols-2 gap-8 items-start justify-items-center py-12">
           
           {/* Main Editorial Hero Shot (Ang Nakaangla sa Itaas) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-[5%] top-[12%] w-[380px] h-[840px] z-20 pointer-events-none"
+            className="w-full max-w-[380px] h-[840px] z-20 justify-self-end pointer-events-none"
           >
             <MagneticImage 
               id="img-hero-1" 
@@ -214,7 +214,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute left-[0%] bottom-[16%] w-[380px] h-[540px] z-30 pointer-events-none"
+            className="w-full max-w-[380px] h-[540px] z-30 justify-self-start self-end pointer-events-none"
           >
             <MagneticImage 
               id="img-hero-2" 

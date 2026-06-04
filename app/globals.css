@@ -39,7 +39,7 @@ html {
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed; /* Parallax effect for extra smoothness */
-            perspective: "1200px";
+            perspective: 1200px;
         }
             .text-gradient-flow {
                 background: linear-gradient(

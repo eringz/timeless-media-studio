@@ -378,13 +378,23 @@ export default function AdminPanel() {
 Timeless Studio Booking Management          </p>
         </div>
 
-        <button
-          type="button"
-          onClick={logout}
-          className="rounded bg-red-600 px-4 py-2 transition hover:bg-red-700"
-        >
-          Logout
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.push('/customer-service/dashboard')}
+            className="rounded bg-slate-700 px-4 py-2 text-white transition hover:bg-slate-600"
+          >
+            Customer Service
+          </button>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded bg-red-600 px-4 py-2 transition hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className="mx-auto max-w-6xl space-y-10 p-6">
