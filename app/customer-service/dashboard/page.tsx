@@ -778,6 +778,9 @@ export default function CustomerServiceDashboard() {
             <button onClick={() => setSettingsOpen((value) => !value)} className="rounded-2xl border border-white/10 px-5 py-3 font-semibold transition hover:border-yellow-400">
               Settings
             </button>
+            <button onClick={() => router.push('/admin')} className="rounded-2xl border border-white/10 px-5 py-3 font-semibold transition hover:border-yellow-400">
+              Admin
+            </button>
             <button onClick={logout} className="rounded-2xl border border-white/10 px-5 py-3 font-semibold transition hover:border-yellow-400">
               Logout
             </button>
