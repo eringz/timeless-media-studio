@@ -70,7 +70,7 @@ const Services = () => {
               />
 
               <div className="relative w-full h-[65%] overflow-hidden bg-neutral-900">
-                <Image src={service.image} alt={service.title} fill className="object-cover grayscale hover:grayscale-0 transition-all duration-700" />
+                <Image src={service.image} alt={service.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover grayscale hover:grayscale-0 transition-all duration-700" />
                 <div className="absolute bottom-2 left-2 font-mono text-[9px] text-white/50 bg-black/70 px-1.5 py-0.5">{service.tag}</div>
               </div>
 
@@ -104,7 +104,7 @@ const Services = () => {
               
               
               <div className="relative w-full md:w-[55%] h-[40vh] md:h-full bg-neutral-900">
-                <Image src={selectedService.image} alt={selectedService.title} fill className="object-cover opacity-80" />
+                <Image src={selectedService.image} alt={selectedService.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover opacity-80" />
               </div>
 
               <div className="flex-1 p-8 md:p-12 flex flex-col justify-between font-sans">

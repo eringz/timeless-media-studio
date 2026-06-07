@@ -13,30 +13,22 @@ export default function TimelessStudioDashboard() {
   } = useMediaGallery();
 
   return (
-    <div className="min-h-screen w-96 text-zinc-100 p-6 flex flex-col gap-4 items-center mx-auto">
-      
-      {error && (
-        <div className="w-full max-w-sm rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400 text-center animate-pulse">
-          {error}
+    <div className="flex flex-col items-center p-6 min-h-screen bg-[#0A0A0A] text-zinc-100">
+      <div className="flex flex-col gap-6 w-full max-w-sm">
+        {error && (
+          <div className="p-3 w-full rounded-lg bg-red-500/10 border border-red-500/20 text-xa text-red-400 text-center animate-pulse">
+            {error}
+          </div>
+        )}
+
+        <div className="overflow-hidden rounded-2xl shadow-2xl border border-white/5">
+          <UploadMediaPanel 
+            isUploading={isUploading}
+            onUploadTrigger={uploadMediaBatch}
+          />
         </div>
-      )}
 
-      <section className="w-full">
-        <UploadMediaPanel 
-          isUploading={isUploading} 
-          onUploadTrigger={uploadMediaBatch} 
-        />
-      </section>
-
-      <section className="w-full">
-        <Link
-          href="/album"
-          className="flex justify-center items-center gap-2 w-full py-3 bg-gradient-to-b from-[#303030]/90 via-20% via-[#1A1A1A] to-[#303030]/90 via-20% text-white text-md border border-white/40 rounded-md hover:opacity-90 transition-opacity text-center block"
-        >
-          <span className="tracking-widest">View Album</span>
-        </Link>
-      </section>
-
+      </div>
     </div>
   );
 }

@@ -107,7 +107,7 @@ const Gallery = () => {
               </button> */}
 
               <div className="relative w-full md:w-[65%] h-[40vh] md:h-[70vh] bg-neutral-100">
-                <Image src={selectedPhoto.src} alt={selectedPhoto.alt} fill className="object-contain p-6" />
+                <Image src={selectedPhoto.src} alt={selectedPhoto.alt} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-contain p-6" />
               </div>
 
               <div className="flex-1 p-8 flex flex-col justify-between font-mono">

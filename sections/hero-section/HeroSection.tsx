@@ -172,9 +172,9 @@ const HeroSection = () => {
     <div className="hero-section w-full bg-black text-white relative min-h-screen flex items-center overflow-hidden selection:bg-white selection:text-black">
       
       {/* ================= BACKGROUND ENVIRONMENT ================= */}
-      <div 
+      {/* <div 
         className="absolute inset-0 z-0 bg-[url('/images/lens-bg.jpg')] bg-cover bg-center opacity-[0.12] pointer-events-none mix-blend-screen filter scale-105" 
-      />
+      /> */}
       
       {/* Subtle Digital Grid Overlay */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
