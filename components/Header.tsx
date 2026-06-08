@@ -16,8 +16,6 @@ const navLinks = [
 
 const Header = () => {
   const { headerVisibility, menuOpen, toggleMenu, closeMenu } = useHeaderVisibility();
-
-  
   return (
     <>
       <div className="flex lg:hidden">
